@@ -12,11 +12,14 @@ import android.graphics.PointF;
 public class AnalyticCoordinatesMapper {
 	
 	/** Kinect 1 IR camera uses a 640x480 depth map */
-	private static final float DEFAULT_ASPECT = 1.33f;
+	private static final float DEFAULT_ASPECT = 0.75f;
 	
 	/** Kinect 1 IR camera should have ~46.8 degrees fov according to
-	 *  manufacturer definition (this may vary slightly) */
-	private static final float DEFAULT_FOVY = 46.8f;
+	 *  manufacturer definition (this may vary slightly).
+	 *  This value was chosen due to giving minimal mean square error
+	 *  from the loopkup table implementation on benchmark recording sessions.
+	 */
+	private static final float DEFAULT_FOVY = 39.7f;
 	
 	/** Near / far clipping planes*/
 	private static final float DEFAULT_NEAR = 1;
@@ -130,8 +133,8 @@ public class AnalyticCoordinatesMapper {
         float wt = zi * _projection[3][2] + wi * _projection[3][3];
 
         // Normalized device coordinates to viewport
-        float xo = ((xt / zt) + 1) * _canvasWidth - (_canvasWidth * 0.5f);
-        float yo = ((yt / zt) + 1) * _canvasHeight - (_canvasHeight * 0.5f);
+        float xo = _canvasWidth * (1 - (xt / zt)) * 0.5f;
+        float yo = _canvasHeight * ((yt / zt) + 0.5f);
 
         return new PointF(xo, yo);
     }
