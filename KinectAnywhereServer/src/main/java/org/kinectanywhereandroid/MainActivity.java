@@ -110,6 +110,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void drawSkeleton(final Skeleton skeleton){
+        canvas.drawColor(Color.WHITE);
+
         // Render Torso
         this.DrawBone(skeleton, Joint.JointType.Head, Joint.JointType.ShoulderCenter);
         this.DrawBone(skeleton, Joint.JointType.ShoulderCenter, Joint.JointType.ShoulderLeft);

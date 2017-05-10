@@ -83,7 +83,7 @@ public class UdpServerThread extends Thread{
                 InetAddress address = packet.getAddress();
                 int port = packet.getPort();
 
-                updatePrompt("Request from: " + address + ":" + port + "\n");
+//                updatePrompt("Request from: " + address + ":" + port + "\n");
 
                 Skeleton skel = new Skeleton();
 
