@@ -51,6 +51,15 @@ public class UdpServerThread extends Thread{
         });
     }
 
+    private void drawSkeleton(final Skeleton skel){
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mActivity.drawSkeleton(skel);
+            }
+        });
+    }
+
     @Override
     public void run() {
 
@@ -76,7 +85,8 @@ public class UdpServerThread extends Thread{
 
                 updatePrompt("Request from: " + address + ":" + port + "\n");
 
-                List<Joint> jointList = new LinkedList<>();
+                Skeleton skel = new Skeleton();
+
                 int i = 4;
 
 
@@ -86,7 +96,8 @@ public class UdpServerThread extends Thread{
                 while (i < packet.getLength()) {
                     Joint joint = new Joint();
 
-                    joint.type = packet.getData()[i++]; // Get current type from packet
+                    joint.type = Joint.JointType.values()[packet.getData()[i++]]; // Get current type from packet
+                    joint.trackingState = Joint.JointTrackingState.values()[packet.getData()[i++]]; // Get current type from packet
 
                     for (int j = 0 ; j < 3; j++) { // For every point in joint (x,y,z):
                         for (int k = 0; k < 4; k++) {   // Get current point from packet
@@ -102,11 +113,13 @@ public class UdpServerThread extends Thread{
                     joint.y = points[1];
                     joint.z = points[2];
 
-                    jointList.add(joint);
+                    skel.joints[joint.type.getValue()] = joint;
                 }
 
+                drawSkeleton(skel);
 
-                Log.e(TAG, Float.toString(jointList.get(0).x));
+
+                Log.e(TAG, Float.toString(skel.joints[0].x));
 
 //                    String dString = new Date().toString() + "\n"
 //                            + "Your address " + address.toString() + ":" + String.valueOf(port);
