@@ -94,6 +94,7 @@ public class UdpServerThread extends Thread{
                 // Check for end of skeleton
                 if (packet.getData()[i] == -1 && packet.getData()[i+1] == -1) {
                     i += 2;
+                    break;
                 }
             }
 
@@ -116,7 +117,7 @@ public class UdpServerThread extends Thread{
             Log.e(TAG, "UDP Server is running");
 
             while(running){
-                byte[] buf = new byte[500];
+                byte[] buf = new byte[5000];
 
                 // receive request
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);

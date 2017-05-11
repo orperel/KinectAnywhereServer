@@ -8,6 +8,7 @@ import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.telecom.Call;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -100,22 +101,25 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Paint paint = new Paint();
-        paint.setColor(Color.parseColor("#CD5C5C"));
+
 
         PointF start = cm.MapSkeletonPointToDepthPoint(joint0);
         PointF end = cm.MapSkeletonPointToDepthPoint(joint1);
 
-        canvas.drawLine(start.x, start.y, end.x, end.y, paint);
+        // We assume all drawn bones are inferred unless BOTH joints are tracked
+        if (joint0.trackingState == Joint.JointTrackingState.Tracked && joint1.trackingState == Joint.JointTrackingState.Tracked)
+        {
+            paint.setColor(Color.parseColor("#000000"));
+            canvas.drawLine(start.x, start.y, end.x, end.y, paint);
+
+        } else {
+            paint.setColor(Color.parseColor("#506bd8"));
+            canvas.drawLine(start.x, start.y, end.x, end.y, paint);
+        }
+
+
         LinearLayout ll = (LinearLayout) findViewById(R.id.rect);
         ll.setBackground(new BitmapDrawable(bg));
-//        // We assume all drawn bones are inferred unless BOTH joints are tracked
-//        Pen drawPen = this.inferredBonePen;
-//        if (joint0.TrackingState == JointTrackingState.Tracked && joint1.TrackingState == JointTrackingState.Tracked)
-//        {
-//            drawPen = this.trackedBonePen;
-//        }
-//
-//        drawingContext.DrawLine(drawPen, this.SkeletonPointToScreen(joint0.Position), this.SkeletonPointToScreen(joint1.Position));
     }
 
 
@@ -152,21 +156,19 @@ public class MainActivity extends AppCompatActivity {
         // Render Joints
         for (Joint joint : skeleton.joints)
         {
-//            Brush drawBrush = null;
-//
-//            if (joint.TrackingState == JointTrackingState.Tracked)
-//            {
-//                drawBrush = this.trackedJointBrush;
-//            }
-//            else if (joint.TrackingState == JointTrackingState.Inferred)
-//            {
-//                drawBrush = this.inferredJointBrush;
-//            }
-//
-//            if (drawBrush != null)
-//            {
-//                drawingContext.DrawEllipse(drawBrush, null, this.SkeletonPointToScreen(joint.Position), JointThickness, JointThickness);
-//            }
+            PointF center = cm.MapSkeletonPointToDepthPoint(joint);
+
+            Paint paint = new Paint();
+            paint.setColor(Color.parseColor("#CD5C5C"));
+
+            if (joint.trackingState == Joint.JointTrackingState.Tracked)
+            {
+                canvas.drawCircle(center.x, center.y, 4, paint);
+            }
+            else if (joint.trackingState == Joint.JointTrackingState.Inferred)
+            {
+                canvas.drawCircle(center.x, center.y, 1, paint);
+            }
         }
     }
 
