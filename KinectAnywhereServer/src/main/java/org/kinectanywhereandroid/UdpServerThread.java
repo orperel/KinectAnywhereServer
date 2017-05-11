@@ -1,21 +1,20 @@
 package org.kinectanywhereandroid;
 
-import android.app.Activity;
 import android.util.Log;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.LinkedList;
 import java.util.List;
 
+// Good example: http://android-er.blogspot.co.il/2016/06/android-datagramudp-server-example.html
 
 public class UdpServerThread extends Thread{
-    private final static String TAG = "bla";
+    private final static String TAG = "UDP_SERVER_THREAD";
     int serverPort;
     MainActivity mActivity;
     DatagramSocket socket;
@@ -41,23 +40,67 @@ public class UdpServerThread extends Thread{
         });
     }
 
-
-    private void updatePrompt(final String prompt){
+    private void drawSkeletons(final List<Skeleton> skeletonList){
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mActivity.updatePrompt(prompt);
+                mActivity.drawSkeletons(skeletonList);
             }
         });
     }
 
-    private void drawSkeleton(final Skeleton skel){
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mActivity.drawSkeleton(skel);
+    public List<Skeleton> parseSkeleton(final DatagramPacket packet) {
+        float[] points = new float[3];
+        byte[] point = new byte[4];
+
+        int i = 0;
+
+        List<Skeleton> skeletonList = new LinkedList<>();
+
+        while (i < packet.getLength()) {
+            Skeleton skeleton = new Skeleton();
+
+            // Parse skeletons tracker id
+            for (int k = 0; k < 4; k++) {   // Get current point from packet
+                point[k] = packet.getData()[i + k];
             }
-        });
+            skeleton.trackingId = ByteBuffer.wrap(point).order(ByteOrder.LITTLE_ENDIAN).getInt();
+
+            i += 4;
+
+            // Parse joints
+            while (i < packet.getLength()) {
+                Joint joint = new Joint();
+
+                joint.type = Joint.JointType.values()[packet.getData()[i++]]; // Get current type from packet
+                joint.trackingState = Joint.JointTrackingState.values()[packet.getData()[i++]]; // Get current type from packet
+
+                for (int j = 0; j < 3; j++) { // For every point in joint (x,y,z):
+                    for (int k = 0; k < 4; k++) {   // Get current point from packet
+                        point[k] = packet.getData()[i + k];
+                    }
+
+                    points[j] = ByteBuffer.wrap(point).order(ByteOrder.LITTLE_ENDIAN).getFloat(); // Convert current point to float
+                    i += 4;
+                }
+
+                // Create joint from points
+                joint.x = points[0];
+                joint.y = points[1];
+                joint.z = points[2];
+
+                skeleton.joints[joint.type.getValue()] = joint;
+
+                // Check for end of skeleton
+                if (packet.getData()[i] == -1 && packet.getData()[i+1] == -1) {
+                    i += 2;
+                }
+            }
+
+            skeletonList.add(skeleton);
+        }
+
+        return skeletonList;
     }
 
     @Override
@@ -77,56 +120,11 @@ public class UdpServerThread extends Thread{
 
                 // receive request
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                socket.receive(packet);     //this code block the program flow
+                socket.receive(packet);   //this code block the program flow
 
-                // send the response to the client at "address" and "port"
-                InetAddress address = packet.getAddress();
-                int port = packet.getPort();
+                List<Skeleton> skeletonList = parseSkeleton(packet);
 
-//                updatePrompt("Request from: " + address + ":" + port + "\n");
-
-                Skeleton skel = new Skeleton();
-
-                int i = 4;
-
-
-                float[] points = new float[3];
-                byte[] point = new byte[4];
-
-                while (i < packet.getLength()) {
-                    Joint joint = new Joint();
-
-                    joint.type = Joint.JointType.values()[packet.getData()[i++]]; // Get current type from packet
-                    joint.trackingState = Joint.JointTrackingState.values()[packet.getData()[i++]]; // Get current type from packet
-
-                    for (int j = 0 ; j < 3; j++) { // For every point in joint (x,y,z):
-                        for (int k = 0; k < 4; k++) {   // Get current point from packet
-                            point[k] = packet.getData()[i + k];
-                        }
-
-                        points[j] = ByteBuffer.wrap(point).order(ByteOrder.LITTLE_ENDIAN).getFloat(); // Convert current point to float
-                        i += 4;
-                    }
-
-                    // Create joint from points
-                    joint.x = points[0];
-                    joint.y = points[1];
-                    joint.z = points[2];
-
-                    skel.joints[joint.type.getValue()] = joint;
-                }
-
-                drawSkeleton(skel);
-
-
-                Log.e(TAG, Float.toString(skel.joints[0].x));
-
-//                    String dString = new Date().toString() + "\n"
-//                            + "Your address " + address.toString() + ":" + String.valueOf(port);
-//                    buf = dString.getBytes();
-//                    packet = new DatagramPacket(buf, buf.length, address, port);
-//                    socket.send(packet);
-
+                drawSkeletons(skeletonList);
             }
 
             Log.e(TAG, "UDP Server ended");
