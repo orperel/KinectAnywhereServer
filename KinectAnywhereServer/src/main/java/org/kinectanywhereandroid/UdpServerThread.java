@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 // Good example: http://android-er.blogspot.co.il/2016/06/android-datagramudp-server-example.html
 
@@ -40,25 +41,28 @@ public class UdpServerThread extends Thread{
         });
     }
 
-    private void drawSkeletons(final List<Skeleton> skeletonList){
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mActivity.drawSkeletons(skeletonList);
-            }
-        });
-    }
-
     public List<Skeleton> parseSkeleton(final DatagramPacket packet) {
         float[] points = new float[3];
         byte[] point = new byte[4];
 
         int i = 0;
+        byte[] timestampsBytes = new byte[8];
+
+        // Parse timestamp
+        for (int k = 0; k < 8; k++) {   // Get current point from packet
+            timestampsBytes[k] = packet.getData()[i + k];
+        }
+
+        i += 8;
+
+        double timestamp = ByteBuffer.wrap(timestampsBytes).order(ByteOrder.LITTLE_ENDIAN).getDouble();
 
         List<Skeleton> skeletonList = new LinkedList<>();
 
         while (i < packet.getLength()) {
             Skeleton skeleton = new Skeleton();
+
+            skeleton.timestamp = timestamp;
 
             // Parse skeletons tracker id
             for (int k = 0; k < 4; k++) {   // Get current point from packet
@@ -116,6 +120,8 @@ public class UdpServerThread extends Thread{
             updateState("UDP Server is running");
             Log.e(TAG, "UDP Server is running");
 
+            mActivity.kinectDict.put("bla", new LinkedList<List<Skeleton>>());
+
             while(running){
                 byte[] buf = new byte[5000];
 
@@ -124,8 +130,7 @@ public class UdpServerThread extends Thread{
                 socket.receive(packet);   //this code block the program flow
 
                 List<Skeleton> skeletonList = parseSkeleton(packet);
-
-                drawSkeletons(skeletonList);
+                mActivity.kinectDict.get("bla").add(skeletonList);
             }
 
             Log.e(TAG, "UDP Server ended");

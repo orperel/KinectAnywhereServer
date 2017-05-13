@@ -1,22 +1,21 @@
 package org.kinectanywhereandroid;
 
-import android.graphics.Canvas;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.telecom.Call;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 public class MainActivity extends AppCompatActivity {
     TextView infoIp;
@@ -27,10 +26,12 @@ public class MainActivity extends AppCompatActivity {
 
     UdpServerThread udpServerThread;
     UdpBroadcastingThread udpBroadcastingThread;
+    KinectQueueWorkerThread kinectQueueWorkerThread;
 
     Bitmap bg = Bitmap.createBitmap(480, 800, Bitmap.Config.ARGB_8888);
     Canvas canvas = new Canvas(bg);
     AnalyticCoordinatesMapper cm = new AnalyticCoordinatesMapper(480, 800);
+    Map<String, Queue<List<Skeleton>>> kinectDict = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
 
         udpBroadcastingThread = new UdpBroadcastingThread(UDP_BROADCATING_PORT);
         udpBroadcastingThread.start();
+
+        kinectQueueWorkerThread = new KinectQueueWorkerThread(this);
+        kinectQueueWorkerThread.start();
 
         super.onStart();
     }
