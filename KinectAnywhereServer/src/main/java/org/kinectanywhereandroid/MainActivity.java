@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import java.net.SocketException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -176,13 +177,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void drawSkeletons(final List<Skeleton> skeletonList){
+    public void drawSkeletons(Map<String, List<Skeleton>> skeletons){
         canvas.drawColor(Color.WHITE);
 
-        for (Skeleton skeleton : skeletonList)
-        {
-            // Draws the skeleton
-            drawBonesAndJoints(skeleton);
+        Iterator<Map.Entry<String, List<Skeleton>>> it = skeletons.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, List<Skeleton>> pair = it.next();
+            for (Skeleton skeleton : pair.getValue()) {
+                // Draws the skeleton
+                drawBonesAndJoints(skeleton);
+            }
         }
     }
 }

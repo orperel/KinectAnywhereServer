@@ -8,6 +8,8 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -41,11 +43,9 @@ public class UdpServerThread extends Thread{
         });
     }
 
-    public List<Skeleton> parseSkeleton(final DatagramPacket packet) {
+    public List<Skeleton> parseSkeleton(final DatagramPacket packet, int i) {
         float[] points = new float[3];
         byte[] point = new byte[4];
-
-        int i = 0;
         byte[] timestampsBytes = new byte[8];
 
         // Parse timestamp
@@ -120,7 +120,6 @@ public class UdpServerThread extends Thread{
             updateState("UDP Server is running");
             Log.e(TAG, "UDP Server is running");
 
-            mActivity.kinectDict.put("bla", new LinkedList<List<Skeleton>>());
 
             while(running){
                 byte[] buf = new byte[5000];
@@ -129,8 +128,23 @@ public class UdpServerThread extends Thread{
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);   //this code block the program flow
 
-                List<Skeleton> skeletonList = parseSkeleton(packet);
-                mActivity.kinectDict.get("bla").add(skeletonList);
+                // Parse timestamp
+                byte[] hostnameBytes = new byte[30];
+                int i = 0;
+                while (packet.getData()[i] != 0) {
+                    hostnameBytes[i] = packet.getData()[i];
+                    i++;
+                }
+
+                String hostname = new String(Arrays.copyOfRange(hostnameBytes, 0, i), StandardCharsets.US_ASCII);
+
+                List<Skeleton> skeletonList = parseSkeleton(packet, ++i);
+
+                if (mActivity.kinectDict.get(hostname) == null) {
+                    mActivity.kinectDict.put(hostname, new LinkedList<List<Skeleton>>());
+                }
+
+                mActivity.kinectDict.get(hostname).add(skeletonList);
             }
 
             Log.e(TAG, "UDP Server ended");
