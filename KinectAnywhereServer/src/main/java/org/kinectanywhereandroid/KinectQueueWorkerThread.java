@@ -1,5 +1,7 @@
 package org.kinectanywhereandroid;
 
+import android.util.Log;
+
 import java.net.DatagramPacket;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,7 +40,7 @@ public class KinectQueueWorkerThread extends Thread{
 
         for (Map.Entry<String, List<Skeleton>> nextCam: skeletons.entrySet()) {
 
-            if (nextCam.getValue().size() != 1)
+            if (nextCam == null || nextCam.getValue().size() != 1)
                 return null;
             else
                 camCandidates.put(nextCam.getKey(), nextCam.getValue().get(0));
@@ -51,24 +53,29 @@ public class KinectQueueWorkerThread extends Thread{
 
         Map<String, Skeleton> cameras = preCalibrate(skeletons);
 
-        if (cameras.size() <= 0)
+        if (cameras == null || cameras.size() <= 0)
             return; // Avoid crashes
 
         Iterator<Map.Entry<String, Skeleton>> camIter = cameras.entrySet().iterator();
 
         Map.Entry<String, Skeleton> cam0 = camIter.next();
-        Map.Entry<String, Skeleton> nextCam = null;
 
         final Map<String, List<Skeleton>> transformedSkels = new HashMap<>();
         transformedSkels.put(cam0.getKey(), Collections.singletonList(cam0.getValue()));
 
-        for (; camIter.hasNext();  nextCam = camIter.next()) {
+        if (!camIter.hasNext())
+            return;
 
+        Map.Entry<String, Skeleton> nextCam = null;
+
+        do {
+            nextCam = camIter.next();
 
             Matrix transformation = mCalibrator.calibrate(cam0.getValue(), nextCam.getValue());
             Skeleton transformedSkel = mCalibrator.transform(nextCam.getValue(), transformation);
             transformedSkels.put(nextCam.getKey(), Collections.singletonList(transformedSkel));
-        }
+
+        }  while (camIter.hasNext());
 
         mActivity.runOnUiThread( new Runnable() {
 
@@ -127,16 +134,23 @@ public class KinectQueueWorkerThread extends Thread{
                             if (!mActivity.kinectDict.get(pair.getKey()).isEmpty()) {
                                 skeletons.put(pair.getKey(), pair.getValue().poll());
                             } else {
+                                // TODO: that's wrong... :(
                                 coverAllHosts = false;
                             }
                         }
 
                         if (coverAllHosts || (abs(System.currentTimeMillis() - globalLastCurrentTimestamp) > 50)) {
-                            drawSkeletons(skeletons);
+                            try {
+                                drawSkeletons(skeletons);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
                             skeletons = new HashMap<>();
-                            globalLastCurrentTimestamp = Double.MAX_VALUE;
                             coverAllHosts = true;
                             globalLastCurrentTimestamp = System.currentTimeMillis();
+                        } else {
+                            Log.d("bla", "bla");
                         }
                     } else {
                         mActivity.kinectDict.get(mostEarlyHost).poll();
@@ -166,6 +180,7 @@ public class KinectQueueWorkerThread extends Thread{
             }
         } catch (Exception e) {
             e.printStackTrace();
+            System.out.println(e);
         } finally {
 
         }

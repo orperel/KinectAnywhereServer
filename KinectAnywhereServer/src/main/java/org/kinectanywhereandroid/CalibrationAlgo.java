@@ -214,7 +214,7 @@ public class CalibrationAlgo {
             
     		Joint joint = skel.joints[i];
     		Matrix jointPos = new Matrix(new double[][]{
-    			{joint.x}, {joint.y}, {joint.z}, {0} 
+    			{joint.x}, {joint.y}, {joint.z}, {1}
     		} );
     		
     		Matrix transformedJoint = transformation.times(jointPos);
