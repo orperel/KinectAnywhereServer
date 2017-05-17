@@ -159,7 +159,7 @@ public class CalibrationAlgo {
         return new Matrix(transform_arr);
     }
 
-    public Matrix runIcp(Skeleton master, Skeleton matched)
+    public Matrix calibrate(Skeleton master, Skeleton matched)
     {
         // Step 1: Selection
         List<Pair<Joint, Joint>> selection = selectPoints(matched, master);
@@ -208,7 +208,7 @@ public class CalibrationAlgo {
      * @param skel
      * @param transformation
      */
-    public void transform(Skeleton skel, Matrix transformation) {
+    public Skeleton transform(Skeleton skel, Matrix transformation) {
     	
     	for (int i = 0; i < Skeleton.JOINTS_COUNT; i++) {
             
@@ -217,10 +217,11 @@ public class CalibrationAlgo {
     			{joint.x}, {joint.y}, {joint.z}, {0} 
     		} );
     		
-    		Matrix transfomredJoint = transformation.times(jointPos);
-    		joint.x = (float)transfomredJoint.get(0, 0);
-    		joint.y = (float)transfomredJoint.get(1, 0);
-    		joint.z = (float)transfomredJoint.get(2, 0);
+    		Matrix transformedJoint = transformation.times(jointPos);
+    		joint.x = (float)transformedJoint.get(0, 0);
+    		joint.y = (float)transformedJoint.get(1, 0);
+    		joint.z = (float)transformedJoint.get(2, 0);
         }
+        return skel;
     }
 }
