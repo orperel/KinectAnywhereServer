@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Queue;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.min;
 
 public class KinectQueueWorkerThread extends Thread{
     private final static String TAG = "KINECT_QUEUE_WORKER_THREAD";
@@ -36,6 +37,10 @@ public class KinectQueueWorkerThread extends Thread{
     @Override
     public void run() {
         running = true;
+
+        Map<String, List<Skeleton>> skeletons = new HashMap<>();
+        boolean coverAllHosts = true;
+        double globalLastCurrentTimestamp = System.currentTimeMillis();
 
         try {
             while(running){
@@ -71,17 +76,23 @@ public class KinectQueueWorkerThread extends Thread{
 
                 if (!mostEarlyHost.equals("")) {
                     if (maxDiff <= 40) {
-                        Map<String, List<Skeleton>> skeletons = new HashMap<>();
-
                         Iterator<Map.Entry<String, Queue<List<Skeleton>>>> it3 = mActivity.kinectDict.entrySet().iterator();
                         while (it3.hasNext()) {
                             Map.Entry<String, Queue<List<Skeleton>>> pair = it3.next();
                             if (!mActivity.kinectDict.get(pair.getKey()).isEmpty()) {
                                 skeletons.put(pair.getKey(), pair.getValue().poll());
+                            } else {
+                                coverAllHosts = false;
                             }
                         }
 
-                        drawSkeletons(skeletons);
+                        if (coverAllHosts || (abs(System.currentTimeMillis() - globalLastCurrentTimestamp) > 50)) {
+                            drawSkeletons(skeletons);
+                            skeletons = new HashMap<>();
+                            globalLastCurrentTimestamp = Double.MAX_VALUE;
+                            coverAllHosts = true;
+                            globalLastCurrentTimestamp = System.currentTimeMillis();
+                        }
                     } else {
                         mActivity.kinectDict.get(mostEarlyHost).poll();
                     }
