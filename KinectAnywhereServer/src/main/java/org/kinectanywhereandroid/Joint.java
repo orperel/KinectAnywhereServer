@@ -2,6 +2,7 @@ package org.kinectanywhereandroid;
 
 
 public class Joint {
+	
     // This contains all of the possible joint types.
     public enum JointType
     {
@@ -52,9 +53,22 @@ public class Joint {
             return value;
         }
     }
+    
     JointType type;
     JointTrackingState trackingState;
     float x;
     float y;
     float z;
+    
+    Joint(float x, float y, float z) {
+    	
+    	this.x = x;
+    	this.y = y;
+    	this.z = z;
+    }
+    
+    Joint() { 
+    	
+    	this(0f, 0f, 0f);
+    };
 }

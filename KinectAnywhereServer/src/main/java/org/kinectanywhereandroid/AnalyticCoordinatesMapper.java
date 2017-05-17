@@ -1,6 +1,5 @@
 package org.kinectanywhereandroid;
 
-import android.graphics.Point;
 import android.graphics.PointF;
 
 /**

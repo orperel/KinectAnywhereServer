@@ -1,7 +1,10 @@
 package org.kinectanywhereandroid;
 
 public class Skeleton {
-    Joint[] joints = new Joint[20];
+	
+	public static final int JOINTS_COUNT = 20;
+	
+    Joint[] joints = new Joint[JOINTS_COUNT];
     int trackingId;
     double timestamp;
 }
