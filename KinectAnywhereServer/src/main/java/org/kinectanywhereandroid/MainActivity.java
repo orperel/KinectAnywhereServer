@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
     Bitmap bg = Bitmap.createBitmap(480, 800, Bitmap.Config.ARGB_8888);
     Canvas canvas = new Canvas(bg);
     AnalyticCoordinatesMapper cm = new AnalyticCoordinatesMapper(480, 800);
-    Map<String, Queue<List<Skeleton>>> kinectDict = new HashMap<>();
+    Map<String, RemoteKinect> kinectDict = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
         // We assume all drawn bones are inferred unless BOTH joints are tracked
         if (joint0.trackingState == Joint.JointTrackingState.Tracked && joint1.trackingState == Joint.JointTrackingState.Tracked)
         {
-            paint.setColor(Color.parseColor("#000000"));
+            paint.setColor(Color.parseColor("#ffffff"));
             canvas.drawLine(start.x, start.y, end.x, end.y, paint);
 
         } else {
@@ -177,8 +177,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void drawHosts() {
+        Paint paint = new Paint();
+        canvas.drawPaint(paint);
+        paint.setColor(Color.WHITE);
+        paint.setTextSize(16);
+
+        int i = 0;
+        for (Map.Entry<String, RemoteKinect> entry : kinectDict.entrySet()) {
+            canvas.drawText(entry.getKey(), 30, 30 + i * 10, paint);
+
+            if (entry.getValue().isON) {
+                paint.setColor(Color.GREEN);
+            } else {
+                paint.setColor(Color.RED);
+            }
+
+            canvas.drawCircle(15, 23 + i * 10, 6, paint);
+            i++;
+        }
+    }
+
     public void drawSkeletons(Map<String, List<Skeleton>> skeletons){
-        canvas.drawColor(Color.WHITE);
+        canvas.drawColor(Color.BLACK);
+
+        drawHosts();
 
         Iterator<Map.Entry<String, List<Skeleton>>> it = skeletons.entrySet().iterator();
         while (it.hasNext()) {

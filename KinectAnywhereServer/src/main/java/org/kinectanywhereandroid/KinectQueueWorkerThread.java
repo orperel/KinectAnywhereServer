@@ -51,37 +51,45 @@ public class KinectQueueWorkerThread extends Thread{
 
     private void drawSkeletons(final Map<String, List<Skeleton>> skeletons){
 
-        Map<String, Skeleton> cameras = preCalibrate(skeletons);
+//        Map<String, Skeleton> cameras = preCalibrate(skeletons);
+//
+//        if (cameras == null || cameras.size() <= 0)
+//            return; // Avoid crashes
+//
+//        Iterator<Map.Entry<String, Skeleton>> camIter = cameras.entrySet().iterator();
+//
+//        Map.Entry<String, Skeleton> cam0 = camIter.next();
+//
+//        final Map<String, List<Skeleton>> transformedSkels = new HashMap<>();
+//        transformedSkels.put(cam0.getKey(), Collections.singletonList(cam0.getValue()));
+//
+//        if (!camIter.hasNext())
+//            return;
+//
+//        Map.Entry<String, Skeleton> nextCam = null;
+//
+//        do {
+//            nextCam = camIter.next();
+//
+//            Matrix transformation = mCalibrator.calibrate(cam0.getValue(), nextCam.getValue());
+//            Skeleton transformedSkel = mCalibrator.transform(nextCam.getValue(), transformation);
+//            transformedSkels.put(nextCam.getKey(), Collections.singletonList(transformedSkel));
+//
+//        }  while (camIter.hasNext());
+//
+//        mActivity.runOnUiThread( new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                mActivity.drawSkeletons(transformedSkels);
+//            }
+//        });
 
-        if (cameras == null || cameras.size() <= 0)
-            return; // Avoid crashes
-
-        Iterator<Map.Entry<String, Skeleton>> camIter = cameras.entrySet().iterator();
-
-        Map.Entry<String, Skeleton> cam0 = camIter.next();
-
-        final Map<String, List<Skeleton>> transformedSkels = new HashMap<>();
-        transformedSkels.put(cam0.getKey(), Collections.singletonList(cam0.getValue()));
-
-        if (!camIter.hasNext())
-            return;
-
-        Map.Entry<String, Skeleton> nextCam = null;
-
-        do {
-            nextCam = camIter.next();
-
-            Matrix transformation = mCalibrator.calibrate(cam0.getValue(), nextCam.getValue());
-            Skeleton transformedSkel = mCalibrator.transform(nextCam.getValue(), transformation);
-            transformedSkels.put(nextCam.getKey(), Collections.singletonList(transformedSkel));
-
-        }  while (camIter.hasNext());
-
-        mActivity.runOnUiThread( new Runnable() {
+                mActivity.runOnUiThread( new Runnable() {
 
             @Override
             public void run() {
-                mActivity.drawSkeletons(transformedSkels);
+                mActivity.drawSkeletons(skeletons);
             }
         });
     }
@@ -100,23 +108,23 @@ public class KinectQueueWorkerThread extends Thread{
                 String mostEarlyHost = "";
                 double minTimestamp = Double.MAX_VALUE;
 
-                Iterator<Map.Entry<String, Queue<List<Skeleton>>>> it = mActivity.kinectDict.entrySet().iterator();
+                Iterator<Map.Entry<String, RemoteKinect>> it = mActivity.kinectDict.entrySet().iterator();
                 while (it.hasNext()) {
-                    Map.Entry<String, Queue<List<Skeleton>>> pair1 = it.next();
-                    if (!mActivity.kinectDict.get(pair1.getKey()).isEmpty()) {
-                        double kinect1Timestamp = mActivity.kinectDict.get(pair1.getKey()).peek().get(0).timestamp;
+                    Map.Entry<String, RemoteKinect> pair1 = it.next();
+                    if (!mActivity.kinectDict.get(pair1.getKey()).skeletonQueue.isEmpty()) {
+                        double kinect1Timestamp = mActivity.kinectDict.get(pair1.getKey()).skeletonQueue.peek().get(0).timestamp;
 
                         if (kinect1Timestamp < minTimestamp) {
                             minTimestamp = kinect1Timestamp;
                             mostEarlyHost = pair1.getKey();
                         }
 
-                        Iterator<Map.Entry<String, Queue<List<Skeleton>>>> it2 = it;
+                        Iterator<Map.Entry<String, RemoteKinect>> it2 = it;
                         while (it2.hasNext()) {
-                            Map.Entry<String, Queue<List<Skeleton>>> pair2 = it2.next();
+                            Map.Entry<String, RemoteKinect> pair2 = it2.next();
 
-                            if (pair1.getKey() != pair2.getKey() && !mActivity.kinectDict.get(pair2.getKey()).isEmpty()) {
-                                double kinect2Timestamp = mActivity.kinectDict.get(pair2.getKey()).peek().get(0).timestamp;
+                            if (pair1.getKey() != pair2.getKey() && !mActivity.kinectDict.get(pair2.getKey()).skeletonQueue.isEmpty()) {
+                                double kinect2Timestamp = mActivity.kinectDict.get(pair2.getKey()).skeletonQueue.peek().get(0).timestamp;
                                 double diff = abs(kinect1Timestamp - kinect2Timestamp);
                                 if (diff > maxDiff) {
                                     maxDiff = diff;
@@ -128,11 +136,11 @@ public class KinectQueueWorkerThread extends Thread{
 
                 if (!mostEarlyHost.equals("")) {
                     if (maxDiff <= 40) {
-                        Iterator<Map.Entry<String, Queue<List<Skeleton>>>> it3 = mActivity.kinectDict.entrySet().iterator();
+                        Iterator<Map.Entry<String, RemoteKinect>> it3 = mActivity.kinectDict.entrySet().iterator();
                         while (it3.hasNext()) {
-                            Map.Entry<String, Queue<List<Skeleton>>> pair = it3.next();
-                            if (!mActivity.kinectDict.get(pair.getKey()).isEmpty()) {
-                                skeletons.put(pair.getKey(), pair.getValue().poll());
+                            Map.Entry<String, RemoteKinect> pair = it3.next();
+                            if (!mActivity.kinectDict.get(pair.getKey()).skeletonQueue.isEmpty()) {
+                                skeletons.put(pair.getKey(), pair.getValue().skeletonQueue.poll());
                             } else {
                                 // TODO: that's wrong... :(
                                 coverAllHosts = false;
@@ -153,30 +161,9 @@ public class KinectQueueWorkerThread extends Thread{
                             Log.d("bla", "bla");
                         }
                     } else {
-                        mActivity.kinectDict.get(mostEarlyHost).poll();
+                        mActivity.kinectDict.get(mostEarlyHost).skeletonQueue.poll();
                     }
                 }
-
-
-//                for (Map.Entry<String, Queue<List<Skeleton>>> entry : mActivity.kinectDict.entrySet())
-//                {
-//                    if (!mActivity.kinectDict.get(entry.getKey()).isEmpty()) {
-//                        double kinect1Timestamp = mActivity.kinectDict.get(entry.getKey()).peek().get(0).timestamp;;
-//                        if (maxDiff == 0) {
-//                            maxDiff = kinect1Timestamp;
-//                        } else {
-//                            for (Map.Entry<String, Queue<List<Skeleton>>> entry2 : mActivity.kinectDict.entrySet())
-//                            {
-//                                if (entry.getKey() != entry.getKey() && !mActivity.kinectDict.get(entry2.getKey()).isEmpty()) {
-//                                    double kinect2Timestamp = mActivity.kinectDict.get(entry2.getKey()).peek().get(0).timestamp;;
-//                                    double diff = abs(kinect1Timestamp - kinect2Timestamp);
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-
-
             }
         } catch (Exception e) {
             e.printStackTrace();

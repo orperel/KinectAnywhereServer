@@ -138,13 +138,17 @@ public class UdpServerThread extends Thread{
 
                 String hostname = new String(Arrays.copyOfRange(hostnameBytes, 0, i), StandardCharsets.US_ASCII);
 
-                List<Skeleton> skeletonList = parseSkeleton(packet, ++i);
-
                 if (mActivity.kinectDict.get(hostname) == null) {
-                    mActivity.kinectDict.put(hostname, new LinkedList<List<Skeleton>>());
+                    mActivity.kinectDict.put(hostname, new RemoteKinect());
                 }
 
-                mActivity.kinectDict.get(hostname).add(skeletonList);
+                RemoteKinect remoteKinect = mActivity.kinectDict.get(hostname);
+                remoteKinect.lastBeacon = System.currentTimeMillis();
+
+                if (i < packet.getLength()) {
+                    List<Skeleton> skeletonList = parseSkeleton(packet, ++i);
+                    remoteKinect.skeletonQueue.add(skeletonList);
+                }
             }
 
             Log.e(TAG, "UDP Server ended");

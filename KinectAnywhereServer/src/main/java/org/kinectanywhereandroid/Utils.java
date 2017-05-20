@@ -7,6 +7,7 @@ import java.util.Enumeration;
 
 public class Utils {
     static public String getIpAddress() throws SocketException {
+        // TODO: just for genymotion...
 //        String ip = "";
 //
 //        Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface.getNetworkInterfaces();
