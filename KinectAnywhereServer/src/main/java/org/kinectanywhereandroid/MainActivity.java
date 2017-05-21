@@ -1,5 +1,6 @@
 package org.kinectanywhereandroid;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -8,15 +9,18 @@ import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.io.Serializable;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 
 public class MainActivity extends AppCompatActivity {
     TextView infoIp;
@@ -46,6 +50,27 @@ public class MainActivity extends AppCompatActivity {
             infoIp.setText(Utils.getIpAddress() + ":" + String.valueOf(UDP_SERVER_PORT));
         } catch (SocketException e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.hosts:
+                Intent myIntent = new Intent(getApplicationContext(), ListKinectsActivity.class);
+                myIntent.putExtra("kinectQueue", (Serializable)kinectDict); //Optional parameters
+                startActivity(myIntent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 
@@ -121,10 +146,6 @@ public class MainActivity extends AppCompatActivity {
             paint.setColor(Color.parseColor("#506bd8"));
             canvas.drawLine(start.x, start.y, end.x, end.y, paint);
         }
-
-
-        LinearLayout ll = (LinearLayout) findViewById(R.id.rect);
-        ll.setBackground(new BitmapDrawable(bg));
     }
 
 
@@ -211,5 +232,8 @@ public class MainActivity extends AppCompatActivity {
                 drawBonesAndJoints(skeleton);
             }
         }
+
+        LinearLayout ll = (LinearLayout) findViewById(R.id.rect);
+        ll.setBackground(new BitmapDrawable(bg));
     }
 }

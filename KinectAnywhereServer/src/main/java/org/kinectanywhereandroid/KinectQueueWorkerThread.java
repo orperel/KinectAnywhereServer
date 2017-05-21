@@ -134,7 +134,7 @@ public class KinectQueueWorkerThread extends Thread{
                     }
                 }
 
-                if (!mostEarlyHost.equals("")) {
+//                if (!mostEarlyHost.equals("")) {
                     if (maxDiff <= 40) {
                         Iterator<Map.Entry<String, RemoteKinect>> it3 = mActivity.kinectDict.entrySet().iterator();
                         while (it3.hasNext()) {
@@ -163,7 +163,9 @@ public class KinectQueueWorkerThread extends Thread{
                     } else {
                         mActivity.kinectDict.get(mostEarlyHost).skeletonQueue.poll();
                     }
-                }
+//                }
+
+                sleep(1);
             }
         } catch (Exception e) {
             e.printStackTrace();
