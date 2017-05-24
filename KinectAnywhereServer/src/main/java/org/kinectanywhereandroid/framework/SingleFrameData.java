@@ -1,6 +1,7 @@
 package org.kinectanywhereandroid.framework;
 
 import org.kinectanywhereandroid.model.Skeleton;
+import org.kinectanywhereandroid.util.Pair;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -14,7 +15,9 @@ import java.util.NoSuchElementException;
 /**
  * Single frame data of skeletons from all cameras
  */
-public class SingleFrameData implements Iterable<Skeleton>, Serializable {
+public class SingleFrameData implements Iterable<Pair<String, Skeleton>>, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final static double UNINITIALIZED = Double.MIN_VALUE;
 
@@ -98,11 +101,11 @@ public class SingleFrameData implements Iterable<Skeleton>, Serializable {
      * @return Iterator for Skeletons of all cameras
      */
     @Override
-    public Iterator<Skeleton> iterator() {
+    public Iterator<Pair<String, Skeleton>> iterator() {
         return new FrameDataIterator();
     }
 
-    private class FrameDataIterator implements Iterator<Skeleton> {
+    private class FrameDataIterator implements Iterator<Pair<String, Skeleton>> {
 
         Iterator<Map.Entry<String, List<Skeleton>>> _camIter;
         Iterator<Skeleton> _skelIter;
@@ -119,33 +122,30 @@ public class SingleFrameData implements Iterable<Skeleton>, Serializable {
         }
 
         @Override
-        public Skeleton next() {
+        public Pair<String, Skeleton> next() {
 
             // Fetch next camera info
-            if ((_skelIter == null) || (!_skelIter.hasNext())) {
+            while ((_skelIter == null) || (!_skelIter.hasNext())) {
 
-                do {
-                    if (!_camIter.hasNext())
-                        throw new NoSuchElementException("End of frame data encountered (cameras, skeletons)");
+                if (!_camIter.hasNext())
+                    throw new NoSuchElementException("End of frame data encountered (cameras, skeletons)");
 
-                    Map.Entry<String, List<Skeleton>> nextEntry = _camIter.next();
+                Map.Entry<String, List<Skeleton>> nextEntry = _camIter.next();
 
-                    if (nextEntry == null)
-                        continue;
+                if (nextEntry == null)
+                    continue;
 
-                    _currCam = nextEntry.getKey();
-                    List<Skeleton> nextSkelList = nextEntry.getValue();
+                _currCam = nextEntry.getKey();
+                List<Skeleton> nextSkelList = nextEntry.getValue();
 
-                    if (nextSkelList == null)
-                        continue;
+                if (nextSkelList == null)
+                    continue;
 
-                    _skelIter = nextSkelList.iterator();
-
-                } while ((_skelIter == null) || (!_skelIter.hasNext()));
+                _skelIter = nextSkelList.iterator();
             }
 
             // Fetch next skeleton of camera
-            return _skelIter.next();
+            return new Pair(_currCam, _skelIter.next());
         }
     }
 

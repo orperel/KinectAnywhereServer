@@ -4,7 +4,9 @@ package org.kinectanywhereandroid.model;
 import java.io.Serializable;
 
 public class Joint implements Serializable {
-	
+
+    private static final long serialVersionUID = 1L;
+
     // This contains all of the possible joint types.
     public enum JointType
     {

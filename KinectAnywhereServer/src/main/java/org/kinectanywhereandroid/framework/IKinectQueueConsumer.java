@@ -7,4 +7,5 @@ public interface IKinectQueueConsumer {
 
     public void register(IKinectFrameEventListener listener);
     public void activate();
+    public void deactivate();
 }

@@ -118,6 +118,15 @@ public class MainActivity extends AppCompatActivity {
             udpBroadcastingThread = null;
         }
 
+        if (kinectQueueConsumer != null) {
+            kinectQueueConsumer.deactivate();
+            kinectQueueConsumer = null;
+        }
+
+        if (mode == AppMode.RECORD) {
+            recorder.finalizeRecording();
+        }
+
         super.onStop();
     }
 

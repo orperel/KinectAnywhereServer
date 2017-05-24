@@ -25,19 +25,14 @@ public class KinectQueueWorkerThread extends Thread implements IKinectQueueConsu
      */
     private final static int FRAME_THRESHOLD = 40;
 
-    MainActivity mActivity;
-    List<WeakReference<IKinectFrameEventListener>> _listeners;
-    boolean running;
+    private MainActivity mActivity;
+    private List<WeakReference<IKinectFrameEventListener>> _listeners;
+    private boolean running;
 
     public KinectQueueWorkerThread(MainActivity mActivity) {
         super();
         this.mActivity = mActivity;
         _listeners = new LinkedList<>();
-    }
-
-    public void setRunning(boolean running){
-
-        this.running = running;
     }
 
     @Override
@@ -149,5 +144,11 @@ public class KinectQueueWorkerThread extends Thread implements IKinectQueueConsu
     public void activate() {
 
         start();
+    }
+
+    @Override
+    public void deactivate() {
+
+        running = false;
     }
 }

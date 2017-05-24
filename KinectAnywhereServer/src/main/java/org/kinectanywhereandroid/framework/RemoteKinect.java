@@ -2,12 +2,11 @@ package org.kinectanywhereandroid.framework;
 
 import org.kinectanywhereandroid.model.Skeleton;
 
-import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class RemoteKinect implements Serializable {
+public class RemoteKinect {
 
     /** All data currently received for this kinect client */
     public Queue<List<Skeleton>> skeletonQueue = new LinkedList<>();

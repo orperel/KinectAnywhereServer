@@ -5,19 +5,23 @@ import android.content.Context;
 
 import org.kinectanywhereandroid.framework.IKinectFrameEventListener;
 import org.kinectanywhereandroid.framework.IKinectQueueConsumer;
+import org.kinectanywhereandroid.framework.RemoteKinect;
 import org.kinectanywhereandroid.framework.SingleFrameData;
+import org.kinectanywhereandroid.util.DataHolder;
+import org.kinectanywhereandroid.util.DataHolderEntry;
 
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 /**
  * Replays recorded sessions as if the KinectQueueWorkerThread have handled them.
  */
-public class KinectQueueReplayMock implements IKinectQueueConsumer {
+public class KinectQueueReplayMock extends Thread implements IKinectQueueConsumer {
 
     private Queue<SingleFrameData> _replayedFrames;
     List<WeakReference<IKinectFrameEventListener>> _listeners;
@@ -76,6 +80,16 @@ public class KinectQueueReplayMock implements IKinectQueueConsumer {
     }
 
     @Override
+    public void run() {
+
+        try {
+            replay();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public void register(IKinectFrameEventListener listener) {
         _listeners.add(new WeakReference<>(listener));
     }
@@ -83,6 +97,10 @@ public class KinectQueueReplayMock implements IKinectQueueConsumer {
     @Override
     public void activate() {
 
-        replay();
+        start();
+    }
+
+    @Override
+    public void deactivate() {
     }
 }
