@@ -75,6 +75,9 @@ public class SkelCalibrator implements IKinectFrameEventListener, CoordinatesTra
     @NonNull
     public Skeleton transform(String fromCamera, String toCamera, Skeleton skeleton) {
 
+        if (fromCamera.equals(toCamera))
+            return skeleton;
+
         Matrix transformation = getTransformation(fromCamera, toCamera);
         return CalibrationAlgo.transform(skeleton, transformation);
     }

@@ -6,11 +6,13 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.widget.LinearLayout;
 
 import org.kinectanywhereandroid.MainActivity;
 import org.kinectanywhereandroid.R;
+import org.kinectanywhereandroid.algorithm.CoordinatesTransformer;
 import org.kinectanywhereandroid.framework.IKinectFrameEventListener;
 import org.kinectanywhereandroid.framework.RemoteKinect;
 import org.kinectanywhereandroid.framework.SingleFrameData;
@@ -156,7 +158,7 @@ public class SkelPainter implements IKinectFrameEventListener {
         return _camerasColorKit.get(cameraName);
     }
 
-    public void drawHosts(Canvas canvas) {
+    public void drawHosts(Canvas canvas, String masterCamera) {
         Paint paint = new Paint();
         canvas.drawPaint(paint);
         paint.setColor(Color.WHITE);
@@ -169,6 +171,14 @@ public class SkelPainter implements IKinectFrameEventListener {
 
             String cameraName = entry.getKey();
             ColorsPalette cameraColorKit = getCameraColorKit(cameraName);
+
+            if (cameraName.equals(masterCamera)) { // Master camera name in bold
+                paint.setTypeface(Typeface.DEFAULT_BOLD);
+            }
+            else { // Non-master camera
+                paint.setTypeface(Typeface.DEFAULT);
+            }
+
             canvas.drawText(cameraName, 30, 30 + i * 10, cameraColorKit.jointsPaint);
 
             if (entry.getValue().isON) {
@@ -186,12 +196,20 @@ public class SkelPainter implements IKinectFrameEventListener {
 
         canvas.drawColor(ColorsPalette.CANVAS_BG_COLOR);
 
-        drawHosts(canvas);
+        String masterCamera = DataHolder.INSTANCE.retrieve(DataHolderEntry.MASTER_CAMERA);
+        drawHosts(canvas, masterCamera);
 
         for (Pair<String, Skeleton> skeletonEntry : frame) {
 
             String cameraName = skeletonEntry.first;
             Skeleton skeleton = skeletonEntry.second;
+
+            // If a master camera is defined, transform to master camera coordinates and then draw
+            if (masterCamera != null) {
+
+                CoordinatesTransformer ct = DataHolder.INSTANCE.retrieve(DataHolderEntry.CAMERA_TRANSFORMER);
+                skeleton = ct.transform(cameraName, masterCamera, skeleton);
+            }
 
             // Draws the skeleton
             drawBonesAndJoints(skeleton, canvas, getCameraColorKit(cameraName));

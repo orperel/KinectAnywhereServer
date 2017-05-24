@@ -23,4 +23,8 @@ public class DataHolderEntry<T> {
      * This helper object transforms a skeleton between the coordinates systems of a pair of Kinect cameras
      */
     public final static DataHolderEntry<CoordinatesTransformer> CAMERA_TRANSFORMER = new DataHolderEntry<>();
+
+    /** If null - all skeletons are managed in their respective coordinate system.
+     *  If not null - skeletons are converted to the coordinates system of this master camera */
+    public final static DataHolderEntry<String> MASTER_CAMERA = new DataHolderEntry<>();
 }
