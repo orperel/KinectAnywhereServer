@@ -213,7 +213,7 @@ public class CalibrationAlgo {
      * @param skel
      * @param transformation
      */
-    public Skeleton transform(Skeleton skel, Matrix transformation) {
+    public static Skeleton transform(Skeleton skel, Matrix transformation) {
     	
     	for (int i = 0; i < Skeleton.JOINTS_COUNT; i++) {
             

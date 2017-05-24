@@ -8,6 +8,7 @@ import org.kinectanywhereandroid.framework.SingleFrameData;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.LinkedList;
 import java.util.Queue;
 
 
@@ -24,6 +25,7 @@ public class SkelRecorder implements IKinectFrameEventListener {
 
     public SkelRecorder(Context appContext) {
         _appContext = appContext;
+        _recordedFrames = new LinkedList<>();
     }
 
     @Override
@@ -32,6 +34,9 @@ public class SkelRecorder implements IKinectFrameEventListener {
         _recordedFrames.offer(frame);
     }
 
+    /**
+     * End of recording - dump all accumulated frames to an external file
+     */
     public void finalizeRecording() {
 
         String fileName = RECORD_FILENAME + RECORD_FILENAME_EXT;

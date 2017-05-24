@@ -1,5 +1,7 @@
 package org.kinectanywhereandroid.framework;
 
+import android.support.annotation.Nullable;
+
 import org.kinectanywhereandroid.model.Skeleton;
 import org.kinectanywhereandroid.util.Pair;
 
@@ -54,6 +56,16 @@ public class SingleFrameData implements Iterable<Pair<String, Skeleton>>, Serial
             return null;
 
         return detectedSkels.get(0);
+    }
+
+    /**
+     * Returns if the camera is tracking a single skeleton
+     * @param cameraName Camera host name
+     * @return True if the camera is tracking exactly 1 skeleton, false otherwise
+     */
+    public boolean isTrackingSingleSkeleton(String cameraName) {
+
+        return (getSingletonSkeleton(cameraName) != null);
     }
 
     /**

@@ -8,6 +8,8 @@ import java.util.Queue;
 
 public class RemoteKinect {
 
+    public static final double INVALID_TIME = -1.0f;
+
     /** All data currently received for this kinect client */
     public Queue<List<Skeleton>> skeletonQueue = new LinkedList<>();
     public double lastBeacon = System.currentTimeMillis();
@@ -29,7 +31,7 @@ public class RemoteKinect {
     public double nextTimeStamp() {
 
         if (!isTrackingSkeletons())
-            return -1.0;
+            return INVALID_TIME;
 
         return skeletonQueue.peek().get(0).timestamp;
     }

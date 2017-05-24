@@ -1,6 +1,7 @@
 package org.kinectanywhereandroid.framework;
 
-import org.kinectanywhereandroid.MainActivity;
+import android.support.annotation.Nullable;
+
 import org.kinectanywhereandroid.util.DataHolder;
 import org.kinectanywhereandroid.util.DataHolderEntry;
 
@@ -25,14 +26,13 @@ public class KinectQueueWorkerThread extends Thread implements IKinectQueueConsu
      */
     private final static int FRAME_THRESHOLD = 40;
 
-    private MainActivity mActivity;
     private List<WeakReference<IKinectFrameEventListener>> _listeners;
-    private boolean running;
+    private boolean _running;
 
-    public KinectQueueWorkerThread(MainActivity mActivity) {
+    public KinectQueueWorkerThread() {
         super();
-        this.mActivity = mActivity;
         _listeners = new LinkedList<>();
+        _running = false;
     }
 
     @Override
@@ -42,8 +42,11 @@ public class KinectQueueWorkerThread extends Thread implements IKinectQueueConsu
 
     /**
      * @param kinectDict Data of remotely connected kinect clients
-     * @return Next assembled kinect frame information from queried connected kinects
+     * @return Next assembled kinect frame information from queried connected kinects,
+     *         may return null if the next frame is not ready yet (or queue is filled with excessive frames
+     *         which have to get removed)
      */
+    @Nullable
     public SingleFrameData sampleKinectQueues(Map<String, RemoteKinect> kinectDict) {
 
         double maxDiff = 0;
@@ -115,10 +118,9 @@ public class KinectQueueWorkerThread extends Thread implements IKinectQueueConsu
 
     @Override
     public void run() {
-        running = true;
 
         try {
-            while(running){
+            while(_running){
 
                 Map<String, RemoteKinect> kinectDict = DataHolder.INSTANCE.retrieve(DataHolderEntry.CONNECTED_HOSTS);
                 SingleFrameData frame = sampleKinectQueues(kinectDict);
@@ -143,12 +145,13 @@ public class KinectQueueWorkerThread extends Thread implements IKinectQueueConsu
     @Override
     public void activate() {
 
+        _running = true;
         start();
     }
 
     @Override
     public void deactivate() {
 
-        running = false;
+        _running = false;
     }
 }

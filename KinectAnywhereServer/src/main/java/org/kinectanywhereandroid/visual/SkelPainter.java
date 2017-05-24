@@ -39,6 +39,7 @@ public class SkelPainter implements IKinectFrameEventListener {
     private Canvas _canvas;
     private AnalyticCoordinatesMapper _cm;
 
+    /** Assigned colors to connected Kinect cameras */
     private Map<String, ColorsPalette> _camerasColorKit;
 
     public SkelPainter(MainActivity activity) {
@@ -199,43 +200,6 @@ public class SkelPainter implements IKinectFrameEventListener {
         LinearLayout ll = (LinearLayout) _activity.findViewById(R.id.rect);
         ll.setBackground(new BitmapDrawable(_bg));
     }
-
-//    private void drawSkeletons(final Map<String, List<Skeleton>> skeletons){
-
-//        Map<String, Skeleton> cameras = preCalibrate(skeletons);
-//
-//        if (cameras == null || cameras.size() <= 0)
-//            return; // Avoid crashes
-//
-//        Iterator<Map.Entry<String, Skeleton>> camIter = cameras.entrySet().iterator();
-//
-//        Map.Entry<String, Skeleton> cam0 = camIter.next();
-//
-//        final Map<String, List<Skeleton>> transformedSkels = new HashMap<>();
-//        transformedSkels.put(cam0.getKey(), Collections.singletonList(cam0.getValue()));
-//
-//        if (!camIter.hasNext())
-//            return;
-//
-//        Map.Entry<String, Skeleton> nextCam = null;
-//
-//        do {
-//            nextCam = camIter.next();
-//
-//            Matrix transformation = mCalibrator.calibrate(cam0.getValue(), nextCam.getValue());
-//            Skeleton transformedSkel = mCalibrator.transform(nextCam.getValue(), transformation);
-//            transformedSkels.put(nextCam.getKey(), Collections.singletonList(transformedSkel));
-//
-//        }  while (camIter.hasNext());
-//
-//        mActivity.runOnUiThread( new Runnable() {
-//
-//            @Override
-//            public void run() {
-//                mActivity.drawSkeletons(transformedSkels);
-//            }
-//        });
-//    }
 
     /**
      * Definitions of look & feel for each camera contents
