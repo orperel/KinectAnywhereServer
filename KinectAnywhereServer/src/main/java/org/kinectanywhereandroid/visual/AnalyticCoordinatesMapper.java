@@ -1,6 +1,8 @@
-package org.kinectanywhereandroid;
+package org.kinectanywhereandroid.visual;
 
 import android.graphics.PointF;
+
+import org.kinectanywhereandroid.model.Joint;
 
 /**
  * Maps Kinect IR camera 3d coordinates to 2d screen coordinates for display.

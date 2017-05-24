@@ -1,4 +1,4 @@
-package org.kinectanywhereandroid;
+package org.kinectanywhereandroid.network;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;

@@ -1,6 +1,13 @@
-package org.kinectanywhereandroid;
+package org.kinectanywhereandroid.network;
 
 import android.util.Log;
+
+import org.kinectanywhereandroid.MainActivity;
+import org.kinectanywhereandroid.framework.RemoteKinect;
+import org.kinectanywhereandroid.model.Joint;
+import org.kinectanywhereandroid.model.Skeleton;
+import org.kinectanywhereandroid.util.DataHolder;
+import org.kinectanywhereandroid.util.DataHolderEntry;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -10,9 +17,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
+import java.util.Map;
 
 // Good example: http://android-er.blogspot.co.il/2016/06/android-datagramudp-server-example.html
 
@@ -21,6 +29,7 @@ public class UdpServerThread extends Thread{
     int serverPort;
     MainActivity mActivity;
     DatagramSocket socket;
+    private Map<String, RemoteKinect> _kinectDict; // Mapping of connected clients
 
     boolean running;
 
@@ -28,6 +37,9 @@ public class UdpServerThread extends Thread{
         super();
         this.serverPort = serverPort;
         this.mActivity = mActivity;
+
+        _kinectDict = new HashMap<>();
+        DataHolder.INSTANCE.save(DataHolderEntry.CONNECTED_HOSTS, _kinectDict); // Share hosts list with rest of app modules
     }
 
     public void setRunning(boolean running){
@@ -138,11 +150,11 @@ public class UdpServerThread extends Thread{
 
                 String hostname = new String(Arrays.copyOfRange(hostnameBytes, 0, i), StandardCharsets.US_ASCII);
 
-                if (mActivity.kinectDict.get(hostname) == null) {
-                    mActivity.kinectDict.put(hostname, new RemoteKinect());
+                if (_kinectDict.get(hostname) == null) {
+                    _kinectDict.put(hostname, new RemoteKinect());
                 }
 
-                RemoteKinect remoteKinect = mActivity.kinectDict.get(hostname);
+                RemoteKinect remoteKinect = _kinectDict.get(hostname);
                 remoteKinect.lastBeacon = System.currentTimeMillis();
 
                 if (i < packet.getLength()) {

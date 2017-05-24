@@ -1,7 +1,9 @@
-package org.kinectanywhereandroid;
+package org.kinectanywhereandroid.model;
 
 
-public class Joint {
+import java.io.Serializable;
+
+public class Joint implements Serializable {
 	
     // This contains all of the possible joint types.
     public enum JointType
@@ -54,20 +56,20 @@ public class Joint {
         }
     }
     
-    JointType type;
-    JointTrackingState trackingState;
-    float x;
-    float y;
-    float z;
+    public JointType type;
+    public JointTrackingState trackingState;
+    public float x;
+    public float y;
+    public float z;
     
-    Joint(float x, float y, float z) {
+    public Joint(float x, float y, float z) {
     	
     	this.x = x;
     	this.y = y;
     	this.z = z;
     }
     
-    Joint() { 
+    public Joint() {
     	
     	this(0f, 0f, 0f);
     };

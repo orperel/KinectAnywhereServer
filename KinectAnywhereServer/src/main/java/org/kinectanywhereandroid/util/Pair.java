@@ -1,5 +1,10 @@
-package org.kinectanywhereandroid;
+package org.kinectanywhereandroid.util;
 
+/**
+ * Utility class for a tuple of 2 items
+ * @param <X> First item
+ * @param <Y> Second item
+ */
 public class Pair<X, Y> { 
     public final X first; 
     public final Y second; 
