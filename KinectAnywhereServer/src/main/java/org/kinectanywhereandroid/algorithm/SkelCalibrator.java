@@ -20,6 +20,7 @@ import Jama.Matrix;
 public class SkelCalibrator implements IKinectFrameEventListener, CoordinatesTransformer {
 
     private CalibrationAlgo _algo;
+    private Map<Pair<String, String>, TemporalApproximation> _temporalApproximations;
 
     /**
      * Transformations between camera 1 coordinates to camera 2 coordinates.
@@ -101,8 +102,28 @@ public class SkelCalibrator implements IKinectFrameEventListener, CoordinatesTra
                         (frame.isTrackingSingleSkeleton(fromCamera)) &&
                         (frame.isTrackingSingleSkeleton(toCamera))) {
 
-                    // TODO: Support other calibration modes
-                    Matrix transformation = calibrateSingleFrame(fromEntries, toEntries);
+                    CalibrationAlgo.CalibrationMode mode = DataHolder.INSTANCE.retrieve(DataHolderEntry.CALIBRATION_MODE);
+                    Matrix transformation;
+
+                    // Choose algorithm by mode
+                    switch (mode) {
+
+                        case PER_FRAME: {
+                            transformation = calibrateSingleFrame(fromEntries, toEntries);
+                            break;
+                        }
+
+                        case FIRST_ORDER_TEMPORAL_APPROX: {
+                            transformation = calibrateFirstOrderApproximation(fromEntries, toEntries);
+                            break;
+                        }
+
+                        default: { // Shouldn't happen - this is a fallback
+                            transformation = calibrateSingleFrame(fromEntries, toEntries);
+                            break;
+                        }
+                    }
+
                     setTransformation(fromCamera, toCamera, transformation);
                 }
             }
@@ -124,5 +145,73 @@ public class SkelCalibrator implements IKinectFrameEventListener, CoordinatesTra
         Skeleton toSkel = toEntries.second;
 
         return _algo.calibrate(fromSkel, toSkel);
+    }
+
+    /**
+     * Calibrate current frame using a rotation axis temporal aproximation
+     * @param fromEntries
+     * @param toEntries
+     * @return The transformation matrix between fromCamera to toMatrix considering temporal average
+     *         approximation.
+     */
+    @NonNull
+    private Matrix calibrateFirstOrderApproximation(Pair<String, Skeleton> fromEntries,
+                                                    Pair<String, Skeleton> toEntries) {
+
+        String fromCam = fromEntries.first;
+        String toCam = toEntries.first;
+        Skeleton fromSkel = fromEntries.second;
+        Skeleton toSkel = toEntries.second;
+
+        Matrix currFrameTransform = _algo.calibrate(fromSkel, toSkel);
+        Matrix rotationSample = CalibrationAlgo.Rotation.extractRotation(currFrameTransform);
+        Matrix translationSample = CalibrationAlgo.Rotation.extractTranslation(currFrameTransform);
+
+        Pair<String, String> pairKey = new Pair<>(fromCam, toCam);
+        TemporalApproximation approximator = null;
+
+        if (!_temporalApproximations.containsKey(pairKey)) {
+            approximator = new TemporalApproximation(rotationSample, translationSample);
+            _temporalApproximations.put(pairKey, approximator);
+        }
+        else {
+            approximator = _temporalApproximations.get(pairKey);
+            approximator.add(rotationSample, translationSample);
+        }
+
+        return approximator.getTransform();
+    }
+
+    private class TemporalApproximation {
+
+        private Matrix axisAngle;
+        private Matrix translation;
+
+        private int framesAveraged;
+
+        public TemporalApproximation(Matrix rotationMatSample, Matrix translationVecSample) {
+
+            framesAveraged = 1;
+            axisAngle = CalibrationAlgo.Rotation.rotationMatToAxisAngle(rotationMatSample);;
+            translation = new Matrix(translationVecSample.getArray());
+        }
+
+        public void add(Matrix rotationMatSample, Matrix translationVecSample) {
+
+            translation = translation.times(1 / framesAveraged).plus(translationVecSample).times(framesAveraged + 1);
+
+            Matrix axisAngleSample = CalibrationAlgo.Rotation.rotationMatToAxisAngle(rotationMatSample);
+            axisAngle = axisAngle.times(1 / framesAveraged).plus(axisAngleSample).times(framesAveraged + 1);
+
+            framesAveraged++;
+        }
+
+        public Matrix getTransform() {
+
+            Matrix rotationMat = CalibrationAlgo.Rotation.axisAngletoRotationMat(axisAngle);
+            Matrix homogeneousMat = CalibrationAlgo.Rotation.composeHomogeneous(rotationMat, translation);
+
+            return homogeneousMat;
+        }
     }
 }

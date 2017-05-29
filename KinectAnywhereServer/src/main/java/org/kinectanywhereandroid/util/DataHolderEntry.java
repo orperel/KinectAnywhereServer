@@ -1,5 +1,6 @@
 package org.kinectanywhereandroid.util;
 
+import org.kinectanywhereandroid.algorithm.CalibrationAlgo;
 import org.kinectanywhereandroid.algorithm.CoordinatesTransformer;
 import org.kinectanywhereandroid.framework.RemoteKinect;
 
@@ -27,4 +28,9 @@ public class DataHolderEntry<T> {
     /** If null - all skeletons are managed in their respective coordinate system.
      *  If not null - skeletons are converted to the coordinates system of this master camera */
     public final static DataHolderEntry<String> MASTER_CAMERA = new DataHolderEntry<>();
+
+    /**
+     * Calibration algorithm used by the skeleton calibrator
+     */
+    public final static DataHolderEntry<CalibrationAlgo.CalibrationMode> CALIBRATION_MODE = new DataHolderEntry<>();
 }

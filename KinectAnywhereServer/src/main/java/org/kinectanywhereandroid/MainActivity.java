@@ -1,6 +1,5 @@
 package org.kinectanywhereandroid;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -10,6 +9,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import org.kinectanywhereandroid.algorithm.CalibrationAlgo;
 import org.kinectanywhereandroid.algorithm.SkelCalibrator;
 import org.kinectanywhereandroid.framework.IKinectQueueConsumer;
 import org.kinectanywhereandroid.framework.KinectQueueWorkerThread;
@@ -25,11 +25,8 @@ import org.kinectanywhereandroid.visual.SkelPainter;
 
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static org.kinectanywhereandroid.util.DataHolder.INSTANCE;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -45,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     TextView infoIp;
     TextView textViewState, textViewPrompt;
     Menu _masterCameraMenu;
+    Menu _calibrationModeMenu;
     Menu _activateClientMenu;
     Menu _shutdownMenu;
 
@@ -63,9 +61,13 @@ public class MainActivity extends AppCompatActivity {
     private enum MenuOptions {
 
         MASTER_CAMERA_GROUP(0),
-        SHOW_ESTIMATED_SKEL(1),
-        ACTIVATE_CLIENT_GROUP(2),
-        SHUTDOWN_MENU_GROUP(3);
+        CALIBRATION_MODE_GROUP(1),
+        SHOW_ESTIMATED_SKEL(2),
+        ACTIVATE_CLIENT_GROUP(3),
+        SHUTDOWN_MENU_GROUP(4),
+
+        CALIBRATION_MODE_PER_FRAME(5),
+        CALIBRATION_MODE_TEMPORAL_APPROX(6);
 
         public final int id;
 
@@ -109,12 +111,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreateOptionsMenu(menu);
 
         _masterCameraMenu = menu.addSubMenu("Master Camera");
+        _calibrationModeMenu = menu.addSubMenu("Calibration Mode");
         _activateClientMenu = menu.addSubMenu("Switch Client On/Off");
         _shutdownMenu = menu.addSubMenu("Shutdown Client");
 
         _masterCameraMenu.add(MenuOptions.MASTER_CAMERA_GROUP.id, 0, Menu.FIRST, "No master");
         menu.add(MenuOptions.SHOW_ESTIMATED_SKEL.id, 0, Menu.NONE, "Show Estimated Skeleton").
                 setCheckable(true).setChecked(false);
+        _calibrationModeMenu.add(MenuOptions.CALIBRATION_MODE_GROUP.id, MenuOptions.CALIBRATION_MODE_PER_FRAME.id,
+                                 Menu.NONE, "Per Frame");
+        _calibrationModeMenu.add(MenuOptions.CALIBRATION_MODE_GROUP.id, MenuOptions.CALIBRATION_MODE_TEMPORAL_APPROX.id,
+                                 Menu.NONE, "Temporal Approximation");
         _activateClientMenu.add(MenuOptions.ACTIVATE_CLIENT_GROUP.id, 0, Menu.FIRST, "All cameras");
         _shutdownMenu.add(MenuOptions.SHUTDOWN_MENU_GROUP.id, 0, Menu.FIRST, "All cameras");
 
@@ -167,6 +174,19 @@ public class MainActivity extends AppCompatActivity {
                 DataHolder.INSTANCE.save(DataHolderEntry.MASTER_CAMERA, master);
                 return true;
             }
+            case CALIBRATION_MODE_GROUP: {
+
+                if (id == MenuOptions.CALIBRATION_MODE_PER_FRAME.id) {
+                    DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE,
+                                             CalibrationAlgo.CalibrationMode.PER_FRAME);
+                }
+                else if (id == MenuOptions.CALIBRATION_MODE_TEMPORAL_APPROX.id) {
+                    DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE,
+                                             CalibrationAlgo.CalibrationMode.FIRST_ORDER_TEMPORAL_APPROX);
+                }
+
+                return true;
+            }
             case SHOW_ESTIMATED_SKEL: {
 
                 return true;
@@ -198,6 +218,7 @@ public class MainActivity extends AppCompatActivity {
                 new KinectQueueWorkerThread() :
                 new KinectQueueReplayMock(getApplicationContext());
 
+        DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE, CalibrationAlgo.CalibrationMode.PER_FRAME);
         calibrator = new SkelCalibrator();
         kinectQueueConsumer.register(calibrator);
 

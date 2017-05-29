@@ -94,6 +94,21 @@ public class CalibrationAlgoTest {
 
     @Test
     public void transform() throws Exception {
-        // Unimplemented
+
+        Skeleton skelA = getSkelA();
+        Skeleton skelB = getSkelB();
+
+        Matrix transform = algo.calibrate(skelA, skelB);
+
+        Matrix rotation = CalibrationAlgo.Rotation.extractRotation(transform);
+        Matrix translation = CalibrationAlgo.Rotation.extractTranslation(transform);
+        Matrix axisAngle = CalibrationAlgo.Rotation.rotationMatToAxisAngle(rotation);
+        Matrix newRotation = CalibrationAlgo.Rotation.axisAngletoRotationMat(axisAngle);
+        Matrix newHomogeneous = CalibrationAlgo.Rotation.composeHomogeneous(newRotation, translation);
+
+        double[][] transformArray = transform.getArray();
+        double[][] newArray = newHomogeneous.getArray();
+
+        assertArrayEquals(transformArray, newArray);
     }
 }

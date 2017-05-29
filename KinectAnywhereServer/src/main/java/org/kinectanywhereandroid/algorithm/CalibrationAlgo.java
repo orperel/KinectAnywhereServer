@@ -32,6 +32,12 @@ public class CalibrationAlgo {
     /** For floating points rounding errors */
     private static final double EPSILON = 0.000001;
 
+    public enum CalibrationMode {
+
+        PER_FRAME,
+        FIRST_ORDER_TEMPORAL_APPROX
+    }
+
     /**
      * Calibrate the matched skeleton to the coordinates system of the master skeleton.
      * Both skeleton are expected to be approximately aligned after this method returns.
@@ -235,32 +241,52 @@ public class CalibrationAlgo {
         }
     }
 
-/*
-    private static class Rotation {
+    public static class Rotation {
 
         // Algorithms implemented according to:
         // https://www.cs.duke.edu/courses/fall13/compsci527/notes/rodrigues.pdf
 
-        private float arctan2(float y, float x) {
-            if ((Math.Abs(x) < EPSILON) && (y > 0))
-                return (float)(Math.PI / 2);
-            else if ((Math.Abs(x) < EPSILON) && (y < 0))
-                return (float)(-Math.PI / 2);
+        private static double arctan2(double y, double x) {
+            if ((Math.abs(x) < EPSILON) && (y > 0))
+                return (Math.PI / 2);
+            else if ((Math.abs(x) < EPSILON) && (y < 0))
+                return (-Math.PI / 2);
             else if (x > 0)
-                return (float)Math.Atan(y / x);
+                return Math.atan(y / x);
             else if (x < 0)
-                return (float)(Math.Atan(y / x) + Math.PI);
+                return (Math.atan(y / x) + Math.PI);
 
             return 0; // Undefined for (0,0)
         }
 
-        public Matrix extractRotation(Matrix homogeneousTransform) {
+        public static Matrix extractRotation(Matrix homogeneousTransform) {
 
             // Homogeneous matrix is 4x4, rotation matrix is the top left 3x3 sub-matrix
-            return homogeneousTransform.getMatrix(0, 0, 2, 2);
+            return homogeneousTransform.getMatrix(0, 2, 0, 2);
         }
 
-        public Matrix rotationMatToAxisAngle(Matrix R)
+        public static Matrix extractTranslation(Matrix homogeneousTransform) {
+
+            // Homogeneous matrix is 4x4, translation vector is the top right 3x1 sub-matrix
+            return homogeneousTransform.getMatrix(0, 2, 3, 3);
+        }
+
+        public static Matrix composeHomogeneous(Matrix rotationMat, Matrix translationVec) {
+
+            // Rotation matrix is a 3x3 matrix
+            // Translation vec is a 3x1 vector
+            // Homogeneous matrix is 4x4, rotation matrix is the top left 3x3 sub-matrix
+            double[][] homogeneousTransform = new double[][] {
+                    { rotationMat.get(0, 0), rotationMat.get(0, 1), rotationMat.get(0, 2), translationVec.get(0, 0) },
+                    { rotationMat.get(1, 0), rotationMat.get(1, 1), rotationMat.get(1, 2), translationVec.get(1, 0) },
+                    { rotationMat.get(2, 0), rotationMat.get(2, 1), rotationMat.get(2, 2), translationVec.get(2, 0) },
+                    { 0, 0, 0, 1}
+            };
+
+            return new Matrix(homogeneousTransform);
+        }
+
+        public static Matrix rotationMatToAxisAngle(Matrix R)
         {
             // -- Calculate using the Inverse Rodrigues formula --
             // rotationMat is a rotation matrix in SO3 where det(rotationMat)=1 and (rotationMat')*(rotationMat) = I
@@ -292,12 +318,12 @@ public class CalibrationAlgo {
                 // u = PI * (v / ||v||)
                 Matrix u = v.times(1 / v.norm2()).times(Math.PI);
 
-                // TODO: Fix that
-                if ((u.norm2() == Math.PI) && (((u[0, 0] == 0) && (u[1, 0] == 0) && (u[2, 0] < 0)) ||
-                ((u[0, 0] == 0) && (u[1, 0] < 0)) ||
-                (u[0, 0] < 0)))
+                if ((u.norm2() == Math.PI) &&
+                        (((u.get(0, 0) == 0) && (u.get(1, 0) == 0) && (u.get(2, 0) < 0)) ||
+                        ((u.get(0, 0) == 0) && (u.get(1, 0) < 0)) ||
+                        (u.get(0, 0) < 0)))
                 {
-                    return u * (-1);
+                    return u.times(-1);
                 }
                 else
                 {
@@ -305,72 +331,58 @@ public class CalibrationAlgo {
                 }
             }
 
-            float theta = arctan2(s, c);
+            double theta = arctan2(s, c);
 
             // Sin theta != 0
-            if (Math.Abs(Math.Sin(theta)) > EPSILON)
+            if (Math.abs(Math.sin(theta)) > EPSILON)
             {
-                Matrix u = p * (1 / s);
-                return u * theta;
+                Matrix u = p.times(1 / s);
+                return u.times(theta);
             }
 
             return new Matrix(4, 1); // Undefined - shouldn't happen
         }
 
-        static public Matrix4 axisAngletoRotationMat(Vector4 r)
+        public static Matrix axisAngletoRotationMat(Matrix r)
         {
             // -- Calculate using the Rodrigues formula --
             // r is an axis angle vector in 3d space
 
             // The angle of rotation is encoded in the norm of axisAngle
-            double theta = Math.Sqrt(r.X * r.X +
-                    r.Y * r.Y +
-                    r.Z * r.Z);
-
-            Matrix4 rotationMat;
+            double theta = r.norm2();
 
             // Make sure <= PI
             if (theta > Math.PI)
                 theta -= 2 * Math.PI;
 
             // Rotation matrix is identity
-            if (Math.Abs(theta) <= EPSILON)
+            if (Math.abs(theta) <= EPSILON)
             {
-                rotationMat = Matrix4.Identity;
-                rotationMat.M44 = 0;
+                Matrix rotationMat = Matrix.identity(3, 3);
                 return rotationMat;
             }
 
             // Define: u = r / theta
-            Vector4 u = new Vector4();
-            u.X = (float)(r.X / theta);
-            u.Y = (float)(r.Y / theta);
-            u.Z = (float)(r.Z / theta);
+            Matrix u = r.times(1 / theta);
+            double ux = u.get(0, 0);
+            double uy = u.get(1, 0);
+            double uz = u.get(2, 0);
 
-            rotationMat = new Matrix4();
+            double[][] rotationMatArr = new double[3][3];
 
-            float oneMinusCosTheta = (float)(1 - Math.Cos(theta));
-            float halfSinTheta = (float)(Math.Sin(theta));
-            rotationMat.M11 = (float)Math.Cos(theta) + oneMinusCosTheta * u.X * u.X;
-            rotationMat.M12 = oneMinusCosTheta * u.X * u.Y + halfSinTheta * (-u.Z);
-            rotationMat.M13 = oneMinusCosTheta * u.X * u.Z + halfSinTheta * (u.Y);
-            rotationMat.M21 = oneMinusCosTheta * u.Y * u.X + halfSinTheta * (u.Z);
-            rotationMat.M22 = (float)Math.Cos(theta) + oneMinusCosTheta * u.Y * u.Y;
-            rotationMat.M23 = oneMinusCosTheta * u.Y * u.Z + halfSinTheta * (-u.X);
-            rotationMat.M31 = oneMinusCosTheta * u.Z * u.X + halfSinTheta * (-u.Y);
-            rotationMat.M32 = oneMinusCosTheta * u.Z * u.Y + halfSinTheta * (u.X);
-            rotationMat.M33 = (float)Math.Cos(theta) + oneMinusCosTheta * u.Z * u.Z;
+            float oneMinusCosTheta = (float)(1 - Math.cos(theta));
+            float halfSinTheta = (float)(Math.sin(theta));
+            rotationMatArr[0][0] = (float)Math.cos(theta) + oneMinusCosTheta * ux * ux;
+            rotationMatArr[0][1] = oneMinusCosTheta * ux * uy + halfSinTheta * (-uz);
+            rotationMatArr[0][2] = oneMinusCosTheta * ux * uz + halfSinTheta * (uy);
+            rotationMatArr[1][0] = oneMinusCosTheta * uy * ux + halfSinTheta * (uz);
+            rotationMatArr[1][1] = (float)Math.cos(theta) + oneMinusCosTheta * uy * uy;
+            rotationMatArr[1][2] = oneMinusCosTheta * uy * uz + halfSinTheta * (-ux);
+            rotationMatArr[2][0] = oneMinusCosTheta * uz * ux + halfSinTheta * (-uy);
+            rotationMatArr[2][1] = oneMinusCosTheta * uz * uy + halfSinTheta * (ux);
+            rotationMatArr[2][2] = (float)Math.cos(theta) + oneMinusCosTheta * uz * uz;
 
-            rotationMat.M14 = 0;
-            rotationMat.M24 = 0;
-            rotationMat.M34 = 0;
-            rotationMat.M41 = 0;
-            rotationMat.M42 = 0;
-            rotationMat.M43 = 0;
-            rotationMat.M44 = 0;
-
-            return rotationMat;
+            return new Matrix(rotationMatArr);
         }
     }
-    */
 }
