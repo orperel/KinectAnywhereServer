@@ -7,5 +7,12 @@ import org.kinectanywhereandroid.model.Skeleton;
  */
 public interface CoordinatesTransformer {
 
+    /**
+     * Transforms Skeleton joints from coordinates system of fromCamera to toCamera
+     * @param fromCamera
+     * @param toCamera
+     * @param skeleton
+     * @return Skeleton in coordinate system of toCamera
+     */
     public Skeleton transform(String fromCamera, String toCamera, Skeleton skeleton);
 }

@@ -63,16 +63,57 @@ public class Joint implements Serializable {
     public float x;
     public float y;
     public float z;
-    
+
+    /**
+     * Creates a new Joint at (x, y, z)
+     * @param x
+     * @param y
+     * @param z
+     */
     public Joint(float x, float y, float z) {
     	
     	this.x = x;
     	this.y = y;
     	this.z = z;
+
+        trackingState = JointTrackingState.NotTracked;
     }
-    
+
+    /**
+     * Creates a new Joint at (0, 0, 0)
+     */
     public Joint() {
     	
     	this(0f, 0f, 0f);
     };
+
+    /**
+     * Adds both Joint vectors.
+     * @param joint Vector of joint to add
+     */
+    public void add(Joint joint) {
+        this.x += joint.x;
+        this.y += joint.y;
+        this.z += joint.z;
+    }
+
+    /**
+     * Normalizes the Joint vector by the given scalar factor
+     * @param factor Scalar factor to divide each of the Joint vector coordinates
+     */
+    public void normalize(float factor) {
+
+        this.x /= factor;
+        this.y /= factor;
+        this.z /= factor;
+    }
+
+    /**
+     * @return Joint in Java array form
+     */
+    public double[] toArray() {
+
+        double[] arr = { x, y, z };
+        return arr;
+    }
 }
