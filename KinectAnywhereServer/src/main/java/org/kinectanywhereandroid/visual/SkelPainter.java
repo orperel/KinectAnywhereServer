@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
+import android.util.Log;
 import android.widget.LinearLayout;
 
 import org.kinectanywhereandroid.MainActivity;
@@ -40,6 +41,18 @@ public class SkelPainter implements IKinectFrameEventListener {
     private Bitmap _bg;
     private Canvas _canvas;
     private AnalyticCoordinatesMapper _cm;
+    private  ColorsPalette[] COLOR_KITS;
+    private int lastKitIndex;
+    private long prevTimestamp;
+
+    public ColorsPalette nextColorKit() {
+
+        // Repeat used kits if we're out of available kits
+        if (lastKitIndex >= 7)
+            lastKitIndex = 0;
+
+        return COLOR_KITS[lastKitIndex++];
+    }
 
     /** Assigned colors to connected Kinect cameras */
     private Map<String, ColorsPalette> _camerasColorKit;
@@ -50,13 +63,28 @@ public class SkelPainter implements IKinectFrameEventListener {
         _bg = Bitmap.createBitmap(CANVAS_WIDTH, CANVAS_HEIGHT, Bitmap.Config.ARGB_8888);
         _canvas = new Canvas(_bg);
         _camerasColorKit = new HashMap<>();
+
+        ColorsPalette CAM0 = new ColorsPalette().setJointsColor(Color.RED).setBonesColor(ColorsPalette.DARKRED);
+        ColorsPalette CAM1 = new ColorsPalette().setJointsColor(Color.BLUE).setBonesColor(ColorsPalette.DARKBLUE);
+        ColorsPalette CAM2 = new ColorsPalette().setJointsColor(Color.GREEN).setBonesColor(ColorsPalette.DARKGREEN);
+        ColorsPalette CAM3 = new ColorsPalette().setJointsColor(Color.YELLOW).setBonesColor(ColorsPalette.DARKYELLOW);
+        ColorsPalette CAM4 = new ColorsPalette().setJointsColor(Color.CYAN).setBonesColor(ColorsPalette.DARKCYAN);
+        ColorsPalette CAM5 = new ColorsPalette().setJointsColor(Color.MAGENTA).setBonesColor(ColorsPalette.DARKMAGENTA);
+        ColorsPalette CAM6 = new ColorsPalette().setJointsColor(ColorsPalette.ORANGE).setBonesColor(ColorsPalette.DARKORANGE);
+        ColorsPalette CAM7 = new ColorsPalette().setJointsColor(Color.WHITE).setBonesColor(Color.GRAY);
+
+        COLOR_KITS = new ColorsPalette[]{ CAM0, CAM1, CAM2, CAM3, CAM4, CAM5, CAM6, CAM7 };
+
+        lastKitIndex = 0;
+        prevTimestamp = 0;
     }
 
     @Override
     public void handle(final SingleFrameData frame) {
+        long currentTimestamp = System.currentTimeMillis();
+        if (currentTimestamp - prevTimestamp > FPS_DELTA) {
+            prevTimestamp = currentTimestamp;
 
-        if (abs(frame.getTimestamp() - frame.getPrevTimestamp()) > FPS_DELTA)
-        {
             _activity.runOnUiThread( new Runnable() {
 
                 @Override
@@ -153,7 +181,7 @@ public class SkelPainter implements IKinectFrameEventListener {
     private ColorsPalette getCameraColorKit(String cameraName) {
 
         if (!_camerasColorKit.containsKey(cameraName))
-            _camerasColorKit.put(cameraName, ColorsPalette.nextColorKit());
+            _camerasColorKit.put(cameraName, nextColorKit());
 
         return _camerasColorKit.get(cameraName);
     }
@@ -217,121 +245,5 @@ public class SkelPainter implements IKinectFrameEventListener {
 
         LinearLayout ll = (LinearLayout) _activity.findViewById(R.id.rect);
         ll.setBackground(new BitmapDrawable(_bg));
-    }
-
-    /**
-     * Definitions of look & feel for each camera contents
-     */
-    private static class ColorsPalette {
-
-        public final static int CANVAS_BG_COLOR = Color.BLACK;
-
-        // More color definitions - ARGB format
-        private final static int DARKRED = Color.parseColor("FF7C1313");
-        private final static int DARKBLUE = Color.parseColor("13137C");
-        private final static int DARKGREEN = Color.parseColor("0B5813");
-        private final static int DARKYELLOW = Color.parseColor("DC8B11");
-        private final static int DARKCYAN = Color.parseColor("0C8F94");
-        private final static int DARKMAGENTA = Color.parseColor("940C94");
-        private final static int ORANGE = Color.parseColor("FF9100");
-        private final static int DARKORANGE = Color.parseColor("AB6306");
-
-        public Paint jointsPaint;
-        public Paint untrackedJointsPaint;
-        public Paint bonesPaint;
-        public Paint untrackedBonesPaint;
-
-        private static int lastKitIndex;
-
-        public static ColorsPalette nextColorKit() {
-
-            // Repeat used kits if we're out of available kits
-            if (lastKitIndex >= 7)
-                lastKitIndex = 0;
-
-            return COLOR_KITS[lastKitIndex++];
-        }
-
-        private ColorsPalette() {
-
-            jointsPaint = new Paint();
-            untrackedJointsPaint = new Paint();
-            bonesPaint = new Paint();
-            untrackedBonesPaint = new Paint();
-
-            setGeneralDefinitions(jointsPaint);
-            setGeneralDefinitions(untrackedJointsPaint);
-            setGeneralDefinitions(bonesPaint);
-            setGeneralDefinitions(untrackedBonesPaint);
-            setJointsSize(3.0f);
-            setBonesWidth(2.5f);
-            markDashed(untrackedJointsPaint);
-            markDashed(untrackedBonesPaint);
-        }
-
-        private void setGeneralDefinitions(Paint painter) {
-
-            painter.setStrokeCap(Paint.Cap.ROUND);
-            painter.setStrokeJoin(Paint.Join.ROUND);
-            painter.setAntiAlias(true);
-            float shadowRadius = 0.7f;
-            painter.setShadowLayer(shadowRadius, 0.5f, 0.5f, Color.DKGRAY);
-            painter.setStyle(Paint.Style.FILL_AND_STROKE);
-            painter.setTextSize(16.0f);
-        }
-
-        private void markDashed(Paint paint) {
-            paint.setPathEffect(new DashPathEffect(new float[] {10,20}, 0));
-        }
-
-        private ColorsPalette setJointsColor(int color) {
-            jointsPaint.setColor(color);
-            untrackedJointsPaint.setColor(color);
-            return this;
-        }
-
-        private ColorsPalette setJointsSize(float size) {
-            jointsPaint.setStrokeWidth(size);
-            untrackedJointsPaint.setStrokeWidth(size);
-            return this;
-        }
-
-        private ColorsPalette setBonesColor(int color) {
-            bonesPaint.setColor(color);
-            untrackedBonesPaint.setColor(color);
-            return this;
-        }
-
-        private ColorsPalette setBonesWidth(float width) {
-            bonesPaint.setStrokeWidth(width);
-            untrackedBonesPaint.setStrokeWidth(width);
-            return this;
-        }
-
-        private static final ColorsPalette CAM0;
-        private static final ColorsPalette CAM1;
-        private static final ColorsPalette CAM2;
-        private static final ColorsPalette CAM3;
-        private static final ColorsPalette CAM4;
-        private static final ColorsPalette CAM5;
-        private static final ColorsPalette CAM6;
-        private static final ColorsPalette CAM7;
-
-        private static final ColorsPalette[] COLOR_KITS;
-
-        static {
-            CAM0 = new ColorsPalette().setJointsColor(Color.RED).setBonesColor(DARKRED);
-            CAM1 = new ColorsPalette().setJointsColor(Color.BLUE).setBonesColor(DARKBLUE);
-            CAM2 = new ColorsPalette().setJointsColor(Color.GREEN).setBonesColor(DARKGREEN);
-            CAM3 = new ColorsPalette().setJointsColor(Color.YELLOW).setBonesColor(DARKYELLOW);
-            CAM4 = new ColorsPalette().setJointsColor(Color.CYAN).setBonesColor(DARKCYAN);
-            CAM5 = new ColorsPalette().setJointsColor(Color.MAGENTA).setBonesColor(DARKMAGENTA);
-            CAM6 = new ColorsPalette().setJointsColor(ORANGE).setBonesColor(DARKORANGE);
-            CAM7 = new ColorsPalette().setJointsColor(Color.WHITE).setBonesColor(Color.GRAY);
-
-            COLOR_KITS = new ColorsPalette[]{ CAM0, CAM1, CAM2, CAM3, CAM4, CAM5, CAM6, CAM7 };
-
-            lastKitIndex = 0;
-        }
     }
 }

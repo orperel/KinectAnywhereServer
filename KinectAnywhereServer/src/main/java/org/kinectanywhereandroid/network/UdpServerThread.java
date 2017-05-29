@@ -166,9 +166,9 @@ public class UdpServerThread extends Thread{
             Log.e(TAG, "UDP Server ended");
 
         } catch (SocketException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getLocalizedMessage());
+        } catch (Exception e) {
+            Log.e(TAG, e.getLocalizedMessage());
         } finally {
             if(socket != null){
                 socket.close();

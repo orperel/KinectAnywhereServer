@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -32,13 +33,14 @@ import static org.kinectanywhereandroid.util.DataHolder.INSTANCE;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
     private enum AppMode {
         NORMAL,
         RECORD,
         REPLAY
     }
 
-    private AppMode mode = AppMode.RECORD;
+    private AppMode mode = AppMode.NORMAL;
 
     TextView infoIp;
     TextView textViewState, textViewPrompt;
@@ -95,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             infoIp.setText(Utils.getIpAddress() + ":" + String.valueOf(UDP_SERVER_PORT));
         } catch (SocketException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getLocalizedMessage());
         }
     }
 
@@ -160,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
 
                 String master = null;
                 if (id != 0)
-                    master = _menuClients.get(id);
+                    master = _menuClients.get(id - 1);
 
                 DataHolder.INSTANCE.save(DataHolderEntry.MASTER_CAMERA, master);
                 return true;
@@ -182,16 +184,6 @@ public class MainActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
             }
         }
-
-        // TODO: Keep this?
-//        // Handle item selection
-//        switch (item.getItemId()) {
-//            case R.id.hosts:
-//                Intent myIntent = new Intent(getApplicationContext(), ListKinectsActivity.class);
-//                startActivity(myIntent);
-//                return true;
-//            default:
-//                return super.onOptionsItemSelected(item);
     }
 
     @Override

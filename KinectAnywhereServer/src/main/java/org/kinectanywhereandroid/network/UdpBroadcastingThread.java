@@ -45,7 +45,7 @@ public class UdpBroadcastingThread extends Thread{
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getLocalizedMessage());
         } finally {
             if(socket != null){
                 socket.close();

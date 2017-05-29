@@ -1,6 +1,7 @@
 package org.kinectanywhereandroid.framework;
 
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import org.kinectanywhereandroid.util.DataHolder;
 import org.kinectanywhereandroid.util.DataHolderEntry;
@@ -9,6 +10,8 @@ import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static java.lang.Math.abs;
 import static org.kinectanywhereandroid.framework.SingleFrameData.SingleFrameDataBuilder;
@@ -17,9 +20,9 @@ import static org.kinectanywhereandroid.framework.SingleFrameData.SingleFrameDat
  * Samples kinect queues of frames and notifies listeners about new incoming data arriving
  * (e.g: calibrate, paint and so on)
  */
-public class KinectQueueWorkerThread extends Thread implements IKinectQueueConsumer {
+public class KinectQueueWorkerThread extends TimerTask implements IKinectQueueConsumer {
 
-    private final static String TAG = "KINECT_QUEUE_WORKER_THREAD";
+    private final static String TAG = "QUEUE_WORKER_THREAD";
 
     /** Threshold of gap in milliseconds allowed between kinect camera snapshots to be considered the same frame.
      *  Assumption: The kinect cameras are synchronized in time as closely as possible
@@ -103,10 +106,12 @@ public class KinectQueueWorkerThread extends Thread implements IKinectQueueConsu
                 String kinectHostname = remotekinectEntry.getKey();
                 RemoteKinect kinect = remotekinectEntry.getValue();
 
-                if (kinect.isTrackingSkeletons())
+                if (!kinect.isTrackingSkeletons()) {
                     frameBuilder.addQuietHost(kinectHostname); // List a camera without skeletons
-                else
-                    frameBuilder.addSkeletons(kinectHostname, kinect.skeletonQueue.poll()); // List a camera without skeletons
+                }
+                else {
+                    frameBuilder.addSkeletons(kinectHostname, kinect.skeletonQueue.poll()); // List a camera with skeletons
+                }
             }
 
             frameBuilder.addTimestamp(System.currentTimeMillis());
@@ -120,13 +125,13 @@ public class KinectQueueWorkerThread extends Thread implements IKinectQueueConsu
     public void run() {
 
         try {
-            while(_running){
+            if (_running){
 
                 Map<String, RemoteKinect> kinectDict = DataHolder.INSTANCE.retrieve(DataHolderEntry.CONNECTED_HOSTS);
                 SingleFrameData frame = sampleKinectQueues(kinectDict);
 
                 if (frame == null)
-                    continue; // Invalid frame was discarded
+                    return; // Invalid frame was discarded
 
                 // Notify listeners (painter, calibration, etc)
                 for (WeakReference<IKinectFrameEventListener> weakListener: _listeners) {
@@ -134,11 +139,9 @@ public class KinectQueueWorkerThread extends Thread implements IKinectQueueConsu
                     if (listener != null)
                         listener.handle(frame);
                 }
-
-                sleep(1);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getLocalizedMessage());
         }
     }
 
@@ -146,7 +149,12 @@ public class KinectQueueWorkerThread extends Thread implements IKinectQueueConsu
     public void activate() {
 
         _running = true;
-        start();
+
+        // 30 fps
+        int delay = 3;
+        int period = 30;
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(this, delay, period);
     }
 
     @Override

@@ -24,6 +24,9 @@ public enum DataHolder {
 
     public <T> T retrieve(DataHolderEntry<T> id) {
         WeakReference<Object> objectWeakReference = data.get(id);
+        if (objectWeakReference == null) {
+            return null;
+        }
         return (T)objectWeakReference.get();
     }
 }

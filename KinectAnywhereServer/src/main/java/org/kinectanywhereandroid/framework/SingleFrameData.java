@@ -21,11 +21,11 @@ public class SingleFrameData implements Iterable<Pair<String, Skeleton>>, Serial
 
     private static final long serialVersionUID = 1L;
 
-    private final static double UNINITIALIZED = Double.MIN_VALUE;
+    private final static long UNINITIALIZED = Long.MIN_VALUE;
 
     private Map<String, List<Skeleton>> _skeletons;
-    private double _timestamp;
-    private double _prevFrameTimestamp;
+    private long _timestamp;
+    private long _prevFrameTimestamp;
 
     private SingleFrameData() {
         // Allow creation only via SingleFrameDataBuilder
@@ -97,14 +97,14 @@ public class SingleFrameData implements Iterable<Pair<String, Skeleton>>, Serial
     /**
      * @return The exact time of when this frame was assembled in milliseconds
      */
-    public double getTimestamp() {
+    public long getTimestamp() {
         return _timestamp;
     }
 
     /**
      * @return The exact time of when the globally previous frame was assembled in milliseconds
      */
-    public double getPrevTimestamp() {
+    public long getPrevTimestamp() {
         return _prevFrameTimestamp;
     }
 
@@ -130,17 +130,11 @@ public class SingleFrameData implements Iterable<Pair<String, Skeleton>>, Serial
 
         @Override
         public boolean hasNext() {
-            return (_skelIter != null) && (_skelIter.hasNext());
-        }
-
-        @Override
-        public Pair<String, Skeleton> next() {
-
             // Fetch next camera info
             while ((_skelIter == null) || (!_skelIter.hasNext())) {
 
                 if (!_camIter.hasNext())
-                    throw new NoSuchElementException("End of frame data encountered (cameras, skeletons)");
+                    return false;
 
                 Map.Entry<String, List<Skeleton>> nextEntry = _camIter.next();
 
@@ -156,6 +150,11 @@ public class SingleFrameData implements Iterable<Pair<String, Skeleton>>, Serial
                 _skelIter = nextSkelList.iterator();
             }
 
+            return (_skelIter != null) && (_skelIter.hasNext());
+        }
+
+        @Override
+        public Pair<String, Skeleton> next() {
             // Fetch next skeleton of camera
             return new Pair(_currCam, _skelIter.next());
         }
@@ -170,7 +169,7 @@ public class SingleFrameData implements Iterable<Pair<String, Skeleton>>, Serial
         SingleFrameData frame = new SingleFrameData();
 
         /** Keeps the timestamp of the last frame data object constructed */
-        static double prevTimestamp = 0;
+        static long prevTimestamp = 0;
 
         /**
          * @return Finalize creation, returns a complete SingleFrameData object
@@ -178,7 +177,7 @@ public class SingleFrameData implements Iterable<Pair<String, Skeleton>>, Serial
         SingleFrameData build() {
 
             if ((frame._timestamp == UNINITIALIZED) || (frame._skeletons.isEmpty()))
-                throw new IllegalStateException("SingleFrameData built with missing mandatory data");
+                return null; // TODO: change the server to safe-thread to fix this issue
 
             frame._prevFrameTimestamp = prevTimestamp;
             prevTimestamp = frame._timestamp; // List latest frame as prev from now on
@@ -212,7 +211,7 @@ public class SingleFrameData implements Iterable<Pair<String, Skeleton>>, Serial
         }
 
         /** Set a timestamp for when this frame was assembled */
-        void addTimestamp(double timestamp) {
+        void addTimestamp(long timestamp) {
             frame._timestamp = timestamp;
         }
     }
