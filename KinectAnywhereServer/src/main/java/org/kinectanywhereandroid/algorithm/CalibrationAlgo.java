@@ -62,19 +62,21 @@ public class CalibrationAlgo {
     @NonNull
     public static Skeleton transform(Skeleton skel, Matrix transformation) {
 
+        Skeleton transformedSkel = new Skeleton(skel);
+
         for (int i = 0; i < Skeleton.JOINTS_COUNT; i++) {
 
-            Joint joint = skel.joints[i];
+            Joint joint = transformedSkel.joints[i];
             Matrix jointPos = new Matrix(new double[][]{
                     {joint.x}, {joint.y}, {joint.z}, {1}
             } );
 
             Matrix transformedJoint = transformation.times(jointPos);
-            joint.x = (float)transformedJoint.get(0, 0);
-            joint.y = (float)transformedJoint.get(1, 0);
-            joint.z = (float)transformedJoint.get(2, 0);
+            transformedSkel.joints[i].x = (float)transformedJoint.get(0, 0);
+            transformedSkel.joints[i].y = (float)transformedJoint.get(1, 0);
+            transformedSkel.joints[i].z = (float)transformedJoint.get(2, 0);
         }
-        return skel;
+        return transformedSkel;
     }
 
     private static class AbsoluteOrientation {

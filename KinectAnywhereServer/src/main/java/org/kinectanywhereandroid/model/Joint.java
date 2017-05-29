@@ -87,6 +87,10 @@ public class Joint implements Serializable {
     	this(0f, 0f, 0f);
     };
 
+    public Joint clone() {
+        return new Joint(this.x, this.y, this.z);
+    }
+
     /**
      * Adds both Joint vectors.
      * @param joint Vector of joint to add

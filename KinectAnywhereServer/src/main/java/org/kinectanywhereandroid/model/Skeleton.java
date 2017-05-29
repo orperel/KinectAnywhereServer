@@ -10,7 +10,24 @@ public class Skeleton implements Serializable {
 
 	public static final int JOINTS_COUNT = 20;
 	
-    public Joint[] joints = new Joint[JOINTS_COUNT];
+    public Joint[] joints ;
     public int trackingId;
     public double timestamp;
+
+    public Skeleton() {
+
+        joints = new Joint[JOINTS_COUNT];
+    }
+
+    public Skeleton(Skeleton srcSkel) {
+
+        joints = new Joint[JOINTS_COUNT];
+
+        for (int i = 0; i < JOINTS_COUNT; i++) {
+            joints[i] = srcSkel.joints[i].clone();
+        }
+
+        trackingId = srcSkel.trackingId;
+        timestamp = srcSkel.timestamp;
+    }
 }
