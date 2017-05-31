@@ -17,8 +17,7 @@ import org.kinectanywhereandroid.framework.RemoteKinect;
 import org.kinectanywhereandroid.network.UdpBroadcastingThread;
 import org.kinectanywhereandroid.network.UdpServerThread;
 import org.kinectanywhereandroid.network.Utils;
-import org.kinectanywhereandroid.recorder.KinectQueueReplayMock;
-import org.kinectanywhereandroid.recorder.SkelRecorder;
+import org.kinectanywhereandroid.recorder.UDPServerThreadMock;
 import org.kinectanywhereandroid.util.DataHolder;
 import org.kinectanywhereandroid.util.DataHolderEntry;
 import org.kinectanywhereandroid.visual.SkelPainter;
@@ -51,10 +50,11 @@ public class MainActivity extends AppCompatActivity {
 
     UdpServerThread udpServerThread;
     UdpBroadcastingThread udpBroadcastingThread;
+    UDPServerThreadMock mockServer;
     IKinectQueueConsumer kinectQueueConsumer;
     SkelPainter painter;
     SkelCalibrator calibrator;
-    SkelRecorder recorder;
+    UDPServerThreadMock recorder;
 
     ArrayList<String> _menuClients;
 
@@ -208,15 +208,21 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
-        udpServerThread = new UdpServerThread(UDP_SERVER_PORT, this);
-        udpServerThread.start();
 
-        udpBroadcastingThread = new UdpBroadcastingThread(UDP_BROADCATING_PORT);
-        udpBroadcastingThread.start();
+        if (mode != AppMode.REPLAY) {
 
-        kinectQueueConsumer = (mode != AppMode.REPLAY) ?
-                new KinectQueueWorkerThread() :
-                new KinectQueueReplayMock(getApplicationContext());
+            boolean isRecord = (mode == AppMode.RECORD); // TODO: Delete this
+            udpServerThread = new UdpServerThread(UDP_SERVER_PORT, this, isRecord);
+            udpServerThread.start();
+
+            udpBroadcastingThread = new UdpBroadcastingThread(UDP_BROADCATING_PORT);
+            udpBroadcastingThread.start();
+        }
+        else {
+            mockServer = new UDPServerThreadMock(this.getApplicationContext(), false);
+        }
+
+        kinectQueueConsumer =  new KinectQueueWorkerThread();
 
         DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE, CalibrationAlgo.CalibrationMode.PER_FRAME);
         calibrator = new SkelCalibrator();
@@ -224,13 +230,10 @@ public class MainActivity extends AppCompatActivity {
 
         painter = new SkelPainter(this);
         kinectQueueConsumer.register(painter);
-
-        if (mode == AppMode.RECORD) {
-            recorder = new SkelRecorder(getApplicationContext());
-            kinectQueueConsumer.register(recorder);
-        }
-
         kinectQueueConsumer.activate();
+
+        if (mockServer != null)
+            mockServer.startReplay();
 
         super.onStart();
     }
@@ -250,10 +253,6 @@ public class MainActivity extends AppCompatActivity {
         if (kinectQueueConsumer != null) {
             kinectQueueConsumer.deactivate();
             kinectQueueConsumer = null;
-        }
-
-        if (mode == AppMode.RECORD) {
-            recorder.finalizeRecording();
         }
 
         super.onStop();

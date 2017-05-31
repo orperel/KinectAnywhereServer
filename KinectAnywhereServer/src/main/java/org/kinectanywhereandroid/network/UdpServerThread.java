@@ -6,10 +6,10 @@ import org.kinectanywhereandroid.MainActivity;
 import org.kinectanywhereandroid.framework.RemoteKinect;
 import org.kinectanywhereandroid.model.Joint;
 import org.kinectanywhereandroid.model.Skeleton;
+import org.kinectanywhereandroid.recorder.UDPServerThreadMock;
 import org.kinectanywhereandroid.util.DataHolder;
 import org.kinectanywhereandroid.util.DataHolderEntry;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -29,21 +29,29 @@ public class UdpServerThread extends Thread{
     int serverPort;
     MainActivity mActivity;
     DatagramSocket socket;
+    UDPServerThreadMock mServerMock; // TODO: No recordings
     private Map<String, RemoteKinect> _kinectDict; // Mapping of connected clients
 
     boolean running;
 
-    public UdpServerThread(int serverPort, MainActivity mActivity) {
+    public UdpServerThread(int serverPort, MainActivity mActivity, boolean isRecord) {
         super();
         this.serverPort = serverPort;
         this.mActivity = mActivity;
 
         _kinectDict = new HashMap<>();
         DataHolder.INSTANCE.save(DataHolderEntry.CONNECTED_HOSTS, _kinectDict); // Share hosts list with rest of app modules
+
+        if (isRecord) {
+            mServerMock = new UDPServerThreadMock(mActivity.getApplicationContext(), true);
+        }
     }
 
     public void setRunning(boolean running){
         this.running = running;
+
+        if ((!running) && (mServerMock != null))
+            mServerMock.finishRecording();
     }
 
     private void updateState(final String state){
@@ -160,6 +168,10 @@ public class UdpServerThread extends Thread{
                 if (i < packet.getLength()) {
                     List<Skeleton> skeletonList = parseSkeleton(packet, ++i);
                     remoteKinect.skeletonQueue.add(skeletonList);
+
+                    if (mServerMock != null) {
+                        mServerMock.recordSkels(hostname, skeletonList); // TODO: delete this
+                    }
                 }
             }
 
