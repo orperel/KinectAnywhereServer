@@ -33,7 +33,7 @@ import static java.lang.Math.abs;
  */
 public class SkelPainter implements IKinectFrameEventListener {
 
-    private final static int FPS_DELTA = 50; // Minimal amount of milliseconds between adjacent renderings
+    private final static int FPS_DELTA = 60; // Minimal amount of milliseconds between adjacent renderings
     private final static int CANVAS_WIDTH = 480;
     private final static int CANVAS_HEIGHT = 800;
 

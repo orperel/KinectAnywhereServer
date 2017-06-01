@@ -68,7 +68,7 @@ public class UDPServerThreadMock extends Thread {
         if (!_isRecord)
             return;
 
-        String fileName = RECORD_FILENAME + RECORD_FILENAME_EXT;
+        String fileName = RECORD_FILENAME + "." + RECORD_FILENAME_EXT;
         FileOutputStream fos = null;
         ObjectOutputStream os = null;
 
@@ -95,7 +95,7 @@ public class UDPServerThreadMock extends Thread {
 
     private void loadReplay() {
 
-        String fileName = RECORD_FILENAME + RECORD_FILENAME_EXT;
+        String fileName = RECORD_FILENAME + "." + RECORD_FILENAME_EXT;
         FileInputStream fis = null;
         ObjectInputStream is = null;
 
@@ -157,7 +157,7 @@ public class UDPServerThreadMock extends Thread {
     }
 
     // Single packet
-    private class RecordedPacket implements Serializable {
+    private static class RecordedPacket implements Serializable {
 
         private static final long serialVersionUID = 1L;
 

@@ -5,13 +5,14 @@ import org.kinectanywhereandroid.model.Skeleton;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class RemoteKinect {
 
     public static final double INVALID_TIME = -1.0f;
 
     /** All data currently received for this kinect client */
-    public Queue<List<Skeleton>> skeletonQueue = new LinkedList<>();
+    public Queue<List<Skeleton>> skeletonQueue = new ConcurrentLinkedQueue<>();
     public double lastBeacon = System.currentTimeMillis();
     public boolean isON = true;
 

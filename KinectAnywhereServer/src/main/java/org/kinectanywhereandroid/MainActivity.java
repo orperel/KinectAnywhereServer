@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         REPLAY
     }
 
-    private AppMode mode = AppMode.NORMAL;
+    private AppMode mode = AppMode.REPLAY;
 
     TextView infoIp;
     TextView textViewState, textViewPrompt;
@@ -226,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
 
         DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE, CalibrationAlgo.CalibrationMode.PER_FRAME);
         calibrator = new SkelCalibrator();
-        kinectQueueConsumer.register(calibrator);
+//        kinectQueueConsumer.register(calibrator);
 
         painter = new SkelPainter(this);
         kinectQueueConsumer.register(painter);

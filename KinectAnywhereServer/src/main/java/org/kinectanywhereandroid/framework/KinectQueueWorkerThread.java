@@ -27,7 +27,7 @@ public class KinectQueueWorkerThread extends TimerTask implements IKinectQueueCo
     /** Threshold of gap in milliseconds allowed between kinect camera snapshots to be considered the same frame.
      *  Assumption: The kinect cameras are synchronized in time as closely as possible
      */
-    private final static int FRAME_THRESHOLD = 60;
+    private final static int FRAME_THRESHOLD = 30;
 
     private List<WeakReference<IKinectFrameEventListener>> _listeners;
     private boolean _running;
