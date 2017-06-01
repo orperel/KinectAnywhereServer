@@ -46,7 +46,8 @@ public class Joint implements Serializable {
     {
         NotTracked(0),
         Inferred(1),
-        Tracked(2);
+        Tracked(2),
+        Predicted(3);
 
         private final int value;
         JointTrackingState(int value) {
@@ -123,5 +124,14 @@ public class Joint implements Serializable {
 
         double[] arr = { x, y, z };
         return arr;
+    }
+
+    public double distance(Joint other) {
+
+        double distPowered = ((Math.pow(this.x  - other.x, 2)) +
+                              (Math.pow(this.y  - other.y, 2)) +
+                              (Math.pow(this.z  - other.z, 2)));
+
+        return Math.sqrt(distPowered);
     }
 }

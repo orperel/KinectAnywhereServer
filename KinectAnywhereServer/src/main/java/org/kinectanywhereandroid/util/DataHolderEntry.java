@@ -3,8 +3,10 @@ package org.kinectanywhereandroid.util;
 import org.kinectanywhereandroid.algorithm.CalibrationAlgo;
 import org.kinectanywhereandroid.algorithm.CoordinatesTransformer;
 import org.kinectanywhereandroid.framework.RemoteKinect;
+import org.kinectanywhereandroid.model.Skeleton;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 
 import Jama.Matrix;
@@ -33,4 +35,16 @@ public class DataHolderEntry<T> {
      * Calibration algorithm used by the skeleton calibrator
      */
     public final static DataHolderEntry<CalibrationAlgo.CalibrationMode> CALIBRATION_MODE = new DataHolderEntry<>();
+
+    /**
+     * List of skeletons viewed by master camera, including predictions from other cameras for missing
+     * joints
+     */
+    public final static DataHolderEntry<List<Skeleton>> AVERAGE_SKELETONS = new DataHolderEntry<>();
+
+    /**
+     * When true - the master view with predicted joints is displayed.
+     * Otherwise - the view of all cameras is displayed.
+     */
+    public final static DataHolderEntry<Boolean> SHOW_AVERAGE_SKELETONS = new DataHolderEntry<>();
 }

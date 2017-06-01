@@ -35,7 +35,9 @@ public class CalibrationAlgo {
     public enum CalibrationMode {
 
         PER_FRAME,
-        FIRST_ORDER_TEMPORAL_APPROX
+        FIRST_ORDER_TEMPORAL_APPROX,
+        BEST_IN_CLASS,
+        KALMAN
     }
 
     /**

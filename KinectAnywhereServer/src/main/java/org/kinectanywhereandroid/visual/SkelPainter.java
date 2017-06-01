@@ -123,12 +123,21 @@ public class SkelPainter implements IKinectFrameEventListener {
         PointF start = _cm.MapSkeletonPointToDepthPoint(joint0);
         PointF end = _cm.MapSkeletonPointToDepthPoint(joint1);
 
-        // We assume all drawn bones are inferred unless BOTH joints are tracked
-        if (joint0.trackingState == Joint.JointTrackingState.Tracked && joint1.trackingState == Joint.JointTrackingState.Tracked)
-        {
-            canvas.drawLine(start.x, start.y, end.x, end.y, colorKit.bonesPaint);
+        boolean isBoneTracked = (joint0.trackingState == Joint.JointTrackingState.Tracked &&
+                                 joint1.trackingState == Joint.JointTrackingState.Tracked);
 
-        } else {
+        boolean isBonePredicted = (joint0.trackingState == Joint.JointTrackingState.Predicted &&
+                                   joint1.trackingState == Joint.JointTrackingState.Tracked) ||
+                                  (joint0.trackingState == Joint.JointTrackingState.Tracked &&
+                                   joint1.trackingState == Joint.JointTrackingState.Predicted);
+
+        if (isBoneTracked) {
+            canvas.drawLine(start.x, start.y, end.x, end.y, colorKit.bonesPaint);
+        }
+        else if (isBonePredicted) {
+            canvas.drawLine(start.x, start.y, end.x, end.y, colorKit.predictedBonesPaint);
+        }
+        else { // Inferred bone from 1 inferred joint and 1 tracked joint
             canvas.drawLine(start.x, start.y, end.x, end.y, colorKit.untrackedBonesPaint);
         }
     }
@@ -177,6 +186,11 @@ public class SkelPainter implements IKinectFrameEventListener {
             }
             else if (joint.trackingState == Joint.JointTrackingState.Inferred)
             {
+                canvas.drawCircle(center.x, center.y, 2f, colorsKit.untrackedJointsPaint);
+            }
+            else if (joint.trackingState == Joint.JointTrackingState.Predicted)
+            {
+                canvas.drawCircle(center.x, center.y, 4f, colorsKit.predictedJoints);
                 canvas.drawCircle(center.x, center.y, 2f, colorsKit.untrackedJointsPaint);
             }
         }
@@ -229,7 +243,8 @@ public class SkelPainter implements IKinectFrameEventListener {
     }
 
     private void drawSingleSkeleton(String cameraName, Skeleton skeleton,
-                                    String masterCamera, Canvas canvas) {
+                                    String masterCamera, Canvas canvas,
+                                    boolean isDrawTransparentMode) {
 
         // If a master camera is defined, transform to master camera coordinates and then draw
         if (masterCamera != null) {
@@ -238,22 +253,39 @@ public class SkelPainter implements IKinectFrameEventListener {
             skeleton = ct.transform(cameraName, masterCamera, skeleton);
         }
 
-        // Draws the skeleton
-        drawBonesAndJoints(skeleton, canvas, getCameraColorKit(cameraName));
+        // Transparent mode: don't draw master and draw all other skeletons with low opacity
+        if (!isDrawTransparentMode) {
+
+            // Draws the skeleton
+            drawBonesAndJoints(skeleton, canvas, getCameraColorKit(cameraName));
+        }
+        else { // isDrawTransparentMode = true
+            if (cameraName.equals(masterCamera)) {
+                return;
+            }
+            else {
+
+                ColorsPalette palette = getCameraColorKit(cameraName);
+
+                // Draws the skeleton with half opacity
+                palette.setAlpha(50);
+                drawBonesAndJoints(skeleton, canvas, palette);
+                palette.setAlpha(255);
+            }
+        }
+
+
     }
 
-    public void drawSkeletons(SingleFrameData frame, Canvas canvas){
-
-        canvas.drawColor(ColorsPalette.CANVAS_BG_COLOR);
-
-        String masterCamera = DataHolder.INSTANCE.retrieve(DataHolderEntry.MASTER_CAMERA);
+    public void drawAllCameras(SingleFrameData frame, Canvas canvas, String masterCamera,
+                               boolean isDrawTransparentMode) {
 
         for (Pair<String, Skeleton> skeletonEntry : frame) {
 
             String cameraName = skeletonEntry.first;
             Skeleton skeleton = skeletonEntry.second;
 
-            drawSingleSkeleton(cameraName, skeleton, masterCamera, canvas);
+            drawSingleSkeleton(cameraName, skeleton, masterCamera, canvas, isDrawTransparentMode);
         }
 
         // Keep skeletons for next iteration and draw frozen skeletons from slow cameras
@@ -277,7 +309,7 @@ public class SkelPainter implements IKinectFrameEventListener {
                     if (timeSinceLastRender < 1000) {
 
                         for (Skeleton skeleton: lastView.second) {
-                            drawSingleSkeleton(cameraName, skeleton, masterCamera, canvas);
+                            drawSingleSkeleton(cameraName, skeleton, masterCamera, canvas, isDrawTransparentMode);
                         }
                     }
                 }
@@ -286,6 +318,36 @@ public class SkelPainter implements IKinectFrameEventListener {
                 long now = System.currentTimeMillis();
                 _lastCameraViews.put(cameraName, new Pair<>(now, trackedSkeletons));
             }
+        }
+    }
+
+    public void drawPredictedSkels(SingleFrameData frame, Canvas canvas, String masterCamera) {
+
+        List<Skeleton> prediction = DataHolder.INSTANCE.retrieve(DataHolderEntry.AVERAGE_SKELETONS);
+
+        if (prediction != null) {
+
+            for (Skeleton skel : prediction) {
+
+                drawSingleSkeleton(masterCamera, skel, masterCamera, canvas, false);
+            }
+        }
+
+        drawAllCameras(frame, canvas, masterCamera, true);
+    }
+
+    public void drawSkeletons(SingleFrameData frame, Canvas canvas){
+
+        canvas.drawColor(ColorsPalette.CANVAS_BG_COLOR);
+        String masterCamera = DataHolder.INSTANCE.retrieve(DataHolderEntry.MASTER_CAMERA);
+
+        boolean isShowAverageSkels = DataHolder.INSTANCE.retrieve(DataHolderEntry.SHOW_AVERAGE_SKELETONS);
+
+        if (isShowAverageSkels) {
+            drawPredictedSkels(frame, canvas, masterCamera);
+        }
+        else {
+            drawAllCameras(frame, canvas, masterCamera, false);
         }
 
         drawHosts(canvas, masterCamera);

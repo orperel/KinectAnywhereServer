@@ -23,8 +23,10 @@ public class ColorsPalette {
 
     public Paint jointsPaint;
     public Paint untrackedJointsPaint;
+    public Paint predictedJoints;
     public Paint bonesPaint;
     public Paint untrackedBonesPaint;
+    public Paint predictedBonesPaint;
 
     public ColorsPalette() {
 
@@ -32,15 +34,20 @@ public class ColorsPalette {
         untrackedJointsPaint = new Paint();
         bonesPaint = new Paint();
         untrackedBonesPaint = new Paint();
+        predictedJoints = new Paint();
+        predictedBonesPaint = new Paint();
 
         setGeneralDefinitions(jointsPaint);
         setGeneralDefinitions(untrackedJointsPaint);
         setGeneralDefinitions(bonesPaint);
         setGeneralDefinitions(untrackedBonesPaint);
+        setGeneralDefinitions(predictedJoints);
+        setGeneralDefinitions(predictedBonesPaint);
         setJointsSize(3.0f);
         setBonesWidth(2.5f);
         markDashed(untrackedJointsPaint);
         markDashed(untrackedBonesPaint);
+        markDashed(predictedBonesPaint);
     }
 
     public void setGeneralDefinitions(Paint painter) {
@@ -60,24 +67,28 @@ public class ColorsPalette {
     public ColorsPalette setJointsColor(int color) {
         jointsPaint.setColor(color);
         untrackedJointsPaint.setColor(color);
+        predictedJoints.setColor(Color.YELLOW);
         return this;
     }
 
     public ColorsPalette setJointsSize(float size) {
         jointsPaint.setStrokeWidth(size);
         untrackedJointsPaint.setStrokeWidth(size - 0.5f);
+        predictedJoints.setStrokeWidth(size);
         return this;
     }
 
     public ColorsPalette setBonesColor(int color) {
         bonesPaint.setColor(color);
         untrackedBonesPaint.setColor(color);
+        predictedBonesPaint.setColor(DARKYELLOW);
         return this;
     }
 
     public ColorsPalette setBonesWidth(float width) {
         bonesPaint.setStrokeWidth(width);
         untrackedBonesPaint.setStrokeWidth(width - 0.5f);
+        predictedBonesPaint.setStrokeWidth(width);
         return this;
     }
 
@@ -108,5 +119,13 @@ public class ColorsPalette {
         deactivateShadow(untrackedJointsPaint);
         deactivateShadow(bonesPaint);
         deactivateShadow(untrackedBonesPaint);
+    }
+
+    public void setAlpha(int alpha) {
+
+        jointsPaint.setAlpha(alpha);
+        untrackedJointsPaint.setAlpha(alpha);
+        bonesPaint.setAlpha(alpha);
+        untrackedBonesPaint.setAlpha(alpha);
     }
 }

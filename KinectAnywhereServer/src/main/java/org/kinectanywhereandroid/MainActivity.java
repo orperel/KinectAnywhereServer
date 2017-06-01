@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.kinectanywhereandroid.algorithm.CalibrationAlgo;
 import org.kinectanywhereandroid.algorithm.SkelCalibrator;
@@ -67,7 +68,9 @@ public class MainActivity extends AppCompatActivity {
         SHUTDOWN_MENU_GROUP(4),
 
         CALIBRATION_MODE_PER_FRAME(5),
-        CALIBRATION_MODE_TEMPORAL_APPROX(6);
+        CALIBRATION_MODE_TEMPORAL_APPROX(6),
+        CALIBRATION_MODE_BEST_IN_CLASS(7),
+        CALIBRATION_MODE_KALMAN(8);
 
         public final int id;
 
@@ -122,6 +125,10 @@ public class MainActivity extends AppCompatActivity {
                                  Menu.NONE, "Per Frame");
         _calibrationModeMenu.add(MenuOptions.CALIBRATION_MODE_GROUP.id, MenuOptions.CALIBRATION_MODE_TEMPORAL_APPROX.id,
                                  Menu.NONE, "Temporal Approximation");
+        _calibrationModeMenu.add(MenuOptions.CALIBRATION_MODE_GROUP.id, MenuOptions.CALIBRATION_MODE_BEST_IN_CLASS.id,
+                                 Menu.NONE, "Best In Class");
+        _calibrationModeMenu.add(MenuOptions.CALIBRATION_MODE_GROUP.id, MenuOptions.CALIBRATION_MODE_KALMAN.id,
+                                 Menu.NONE, "Kalman Approximation");
         _activateClientMenu.add(MenuOptions.ACTIVATE_CLIENT_GROUP.id, 0, Menu.FIRST, "All cameras");
         _shutdownMenu.add(MenuOptions.SHUTDOWN_MENU_GROUP.id, 0, Menu.FIRST, "All cameras");
 
@@ -159,6 +166,26 @@ public class MainActivity extends AppCompatActivity {
         return super.onPrepareOptionsMenu(menu);
     }
 
+    /**
+     * Automatically choose the first available camera and set as master if no master is currently set.
+     * Otherwise nothing happens
+     */
+    private void setMasterAutomatically() {
+
+        if (_menuClients.size() > 0) {
+
+            String master = DataHolder.INSTANCE.retrieve(DataHolderEntry.MASTER_CAMERA);
+
+            if (master == null) {
+                master = _menuClients.get(0);
+                DataHolder.INSTANCE.save(DataHolderEntry.MASTER_CAMERA, master);
+
+                Toast.makeText(this, master + " automatically set as master camera.",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -168,6 +195,9 @@ public class MainActivity extends AppCompatActivity {
 
         switch (group) {
             case MASTER_CAMERA_GROUP: {
+
+                if (item.hasSubMenu())
+                    return true; // Avoid sub menu setting values
 
                 String master = null;
                 if (id != 0)
@@ -186,10 +216,32 @@ public class MainActivity extends AppCompatActivity {
                     DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE,
                                              CalibrationAlgo.CalibrationMode.FIRST_ORDER_TEMPORAL_APPROX);
                 }
+                else if (id == MenuOptions.CALIBRATION_MODE_BEST_IN_CLASS.id) {
+                    DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE,
+                                             CalibrationAlgo.CalibrationMode.BEST_IN_CLASS);
+                }
+                else if (id == MenuOptions.CALIBRATION_MODE_KALMAN.id) {
+                    DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE,
+                                             CalibrationAlgo.CalibrationMode.KALMAN);
+                }
+
+                // If there are connected clients and there is no master set, choose the first camera
+                // so the calibration process shows some results on screen
+                setMasterAutomatically();
 
                 return true;
             }
             case SHOW_ESTIMATED_SKEL: {
+
+                item.setChecked(!item.isChecked());
+                DataHolder.INSTANCE.save(DataHolderEntry.SHOW_AVERAGE_SKELETONS, item.isChecked());
+
+                if (item.isChecked()) {
+
+                    // If there are connected clients and there is no master set, choose the first camera
+                    // so the calibration process shows some results on screen
+                    setMasterAutomatically();
+                }
 
                 return true;
             }
@@ -226,7 +278,8 @@ public class MainActivity extends AppCompatActivity {
 
         kinectQueueConsumer =  new KinectQueueWorkerThread();
 
-        DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE, CalibrationAlgo.CalibrationMode.PER_FRAME);
+        DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE, CalibrationAlgo.CalibrationMode.BEST_IN_CLASS);
+        DataHolder.INSTANCE.save(DataHolderEntry.SHOW_AVERAGE_SKELETONS, false);
         calibrator = new SkelCalibrator();
         kinectQueueConsumer.register(calibrator);
 
