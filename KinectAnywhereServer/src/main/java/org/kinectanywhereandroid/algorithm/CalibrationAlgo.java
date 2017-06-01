@@ -48,7 +48,7 @@ public class CalibrationAlgo {
      *         to master coordinates system.
      */
     @NonNull
-    public Matrix calibrate(Skeleton master, Skeleton matched)
+    public Matrix calibrate(Skeleton matched, Skeleton master)
     {
         // Step 1: Selection (filter only joints that are tracked in both skeletons)
         List<Pair<Joint, Joint>> selection = AbsoluteOrientation.selectPoints(matched, master);

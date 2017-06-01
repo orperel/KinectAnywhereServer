@@ -88,7 +88,11 @@ public class Joint implements Serializable {
     };
 
     public Joint clone() {
-        return new Joint(this.x, this.y, this.z);
+
+        Joint newJoint = new Joint(this.x, this.y, this.z);
+        newJoint.type = this.type;
+        newJoint.trackingState = this.trackingState;
+        return newJoint;
     }
 
     /**
