@@ -8,6 +8,7 @@ import org.kinectanywhereandroid.model.Skeleton;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 import Jama.Matrix;
 
@@ -47,4 +48,9 @@ public class DataHolderEntry<T> {
      * Otherwise - the view of all cameras is displayed.
      */
     public final static DataHolderEntry<Boolean> SHOW_AVERAGE_SKELETONS = new DataHolderEntry<>();
+	
+	/**
+	 * Queue for sending broadcast messages
+     */
+    public final static DataHolderEntry<Queue<String>> BROADCASTING_QUEUE = new DataHolderEntry<>();
 }

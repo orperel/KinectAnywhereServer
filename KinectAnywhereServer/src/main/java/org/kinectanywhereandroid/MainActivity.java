@@ -26,7 +26,9 @@ import org.kinectanywhereandroid.visual.SkelPainter;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -246,10 +248,35 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
             case ACTIVATE_CLIENT_GROUP: {
+                String client = _menuClients.get(id - 1);
+                Map<String, RemoteKinect> connectedHosts = DataHolder.INSTANCE.retrieve(DataHolderEntry.CONNECTED_HOSTS);
+
+                Queue<String> queue = DataHolder.INSTANCE.retrieve(DataHolderEntry.BROADCASTING_QUEUE);
+
+                String msg = client;
+                if (connectedHosts.get(client).isON) {
+                    msg += "=OFF";
+                } else {
+                    msg += "=ON";
+                }
+
+                for (int i = 0; i < 3; i++) {
+                    queue.add(msg);
+                }
 
                 return true;
             }
             case SHUTDOWN_MENU_GROUP: {
+                String client = _menuClients.get(id - 1);
+                Map<String, RemoteKinect> connectedHosts = DataHolder.INSTANCE.retrieve(DataHolderEntry.CONNECTED_HOSTS);
+
+                Queue<String> queue = DataHolder.INSTANCE.retrieve(DataHolderEntry.BROADCASTING_QUEUE);
+
+                String msg = client + "=SHUTDOWN";
+
+                for (int i = 0; i < 3; i++) {
+                    queue.add(msg);
+                }
 
                 return true;
             }
@@ -268,13 +295,13 @@ public class MainActivity extends AppCompatActivity {
             boolean isRecord = (mode == AppMode.RECORD); // TODO: Delete this
             udpServerThread = new UdpServerThread(UDP_SERVER_PORT, this, isRecord);
             udpServerThread.start();
-
-            udpBroadcastingThread = new UdpBroadcastingThread(UDP_BROADCATING_PORT);
-            udpBroadcastingThread.start();
         }
         else {
             mockServer = new UDPServerThreadMock(this.getApplicationContext(), false);
         }
+
+        udpBroadcastingThread = new UdpBroadcastingThread(UDP_BROADCATING_PORT);
+        udpBroadcastingThread.start();
 
         kinectQueueConsumer =  new KinectQueueWorkerThread();
 
