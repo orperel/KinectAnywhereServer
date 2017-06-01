@@ -6,6 +6,7 @@ import org.kinectanywhereandroid.framework.RemoteKinect;
 
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Queue;
 
 import Jama.Matrix;
 
@@ -33,4 +34,9 @@ public class DataHolderEntry<T> {
      * Calibration algorithm used by the skeleton calibrator
      */
     public final static DataHolderEntry<CalibrationAlgo.CalibrationMode> CALIBRATION_MODE = new DataHolderEntry<>();
+
+    /**
+     * Queue for sending broadcast messages
+     */
+    public final static DataHolderEntry<Queue<String>> BROADCASTING_QUEUE = new DataHolderEntry<>();
 }

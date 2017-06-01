@@ -23,6 +23,7 @@ import java.util.Queue;
 
 public class UDPServerThreadMock extends Thread {
 
+    // Path in androids filesystem: /data/user/0/org.kinectanywhereandroid/files/calibration_sess.rc2
     public final static String RECORD_FILENAME = "calibration_sess";
     public final static String RECORD_FILENAME_EXT = "rc2";
     private final static String TAG = "UDPServerThreadMock";
