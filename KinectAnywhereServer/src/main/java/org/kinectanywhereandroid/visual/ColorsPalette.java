@@ -48,9 +48,8 @@ public class ColorsPalette {
         painter.setStrokeCap(Paint.Cap.ROUND);
         painter.setStrokeJoin(Paint.Join.ROUND);
         painter.setAntiAlias(true);
-        float shadowRadius = 0.4f;
-        painter.setShadowLayer(shadowRadius, 0.5f, 0.5f, Color.DKGRAY);
         painter.setStyle(Paint.Style.FILL_AND_STROKE);
+        activateShadow(painter);
         painter.setTextSize(16.0f);
     }
 
@@ -80,5 +79,34 @@ public class ColorsPalette {
         bonesPaint.setStrokeWidth(width);
         untrackedBonesPaint.setStrokeWidth(width - 0.5f);
         return this;
+    }
+
+    private void activateShadow(Paint painter) {
+
+        float shadowRadius = 0.4f;
+        painter.setShadowLayer(shadowRadius, 0.5f, 0.5f, Color.DKGRAY);
+        painter.setAntiAlias(true);
+    }
+
+    private void deactivateShadow(Paint painter) {
+
+        painter.setShadowLayer(0, 0.0f, 0.0f, Color.DKGRAY);
+        painter.setAntiAlias(false);
+    }
+
+    public void activateShadow() {
+
+        activateShadow(jointsPaint);
+        activateShadow(untrackedJointsPaint);
+        activateShadow(bonesPaint);
+        activateShadow(untrackedBonesPaint);
+    }
+
+    public void deactivateShadow() {
+
+        deactivateShadow(jointsPaint);
+        deactivateShadow(untrackedJointsPaint);
+        deactivateShadow(bonesPaint);
+        deactivateShadow(untrackedBonesPaint);
     }
 }

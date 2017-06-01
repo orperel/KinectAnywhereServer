@@ -24,6 +24,7 @@ import org.kinectanywhereandroid.util.DataHolderEntry;
 import org.kinectanywhereandroid.util.Pair;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.lang.Math.abs;
@@ -45,6 +46,8 @@ public class SkelPainter implements IKinectFrameEventListener {
     private int lastKitIndex;
     private long prevTimestamp;
 
+    private Map<String, Pair<Long, List<Skeleton>>> _lastCameraViews;
+
     public ColorsPalette nextColorKit() {
 
         // Repeat used kits if we're out of available kits
@@ -62,6 +65,7 @@ public class SkelPainter implements IKinectFrameEventListener {
         _cm = new AnalyticCoordinatesMapper(CANVAS_WIDTH, CANVAS_HEIGHT);
         _bg = Bitmap.createBitmap(CANVAS_WIDTH, CANVAS_HEIGHT, Bitmap.Config.ARGB_8888);
         _canvas = new Canvas(_bg);
+        _lastCameraViews = new HashMap<>();
         _camerasColorKit = new HashMap<>();
 
         ColorsPalette CAM0 = new ColorsPalette().setJointsColor(Color.RED).setBonesColor(ColorsPalette.DARKRED);
@@ -188,7 +192,6 @@ public class SkelPainter implements IKinectFrameEventListener {
 
     public void drawHosts(Canvas canvas, String masterCamera) {
         Paint paint = new Paint();
-        canvas.drawPaint(paint);
         paint.setColor(Color.WHITE);
         paint.setTextSize(16);
 
@@ -198,6 +201,7 @@ public class SkelPainter implements IKinectFrameEventListener {
         for (Map.Entry<String, RemoteKinect> entry : kinectDict.entrySet()) {
 
             String cameraName = entry.getKey();
+            RemoteKinect kinect = entry.getValue();
             ColorsPalette cameraColorKit = getCameraColorKit(cameraName);
 
             if (cameraName.equals(masterCamera)) { // Master camera name in bold
@@ -207,7 +211,9 @@ public class SkelPainter implements IKinectFrameEventListener {
                 paint.setTypeface(Typeface.DEFAULT);
             }
 
-            canvas.drawText(cameraName, 30, 30 + i * 10, cameraColorKit.jointsPaint);
+            String cameraInfo = cameraName + " [~" + kinect.fps() + " FPS]";
+            cameraColorKit.deactivateShadow();
+            canvas.drawText(cameraInfo, 30, 30 + i * 25, cameraColorKit.jointsPaint);
 
             if (entry.getValue().isON) {
                 paint.setColor(Color.GREEN);
@@ -215,9 +221,25 @@ public class SkelPainter implements IKinectFrameEventListener {
                 paint.setColor(Color.RED);
             }
 
-            canvas.drawCircle(15, 23 + i * 10, 6, paint);
+            canvas.drawCircle(15, 23 + i * 25, 6, paint);
             i++;
+
+            cameraColorKit.activateShadow();
         }
+    }
+
+    private void drawSingleSkeleton(String cameraName, Skeleton skeleton,
+                                    String masterCamera, Canvas canvas) {
+
+        // If a master camera is defined, transform to master camera coordinates and then draw
+        if (masterCamera != null) {
+
+            CoordinatesTransformer ct = DataHolder.INSTANCE.retrieve(DataHolderEntry.CAMERA_TRANSFORMER);
+            skeleton = ct.transform(cameraName, masterCamera, skeleton);
+        }
+
+        // Draws the skeleton
+        drawBonesAndJoints(skeleton, canvas, getCameraColorKit(cameraName));
     }
 
     public void drawSkeletons(SingleFrameData frame, Canvas canvas){
@@ -225,23 +247,48 @@ public class SkelPainter implements IKinectFrameEventListener {
         canvas.drawColor(ColorsPalette.CANVAS_BG_COLOR);
 
         String masterCamera = DataHolder.INSTANCE.retrieve(DataHolderEntry.MASTER_CAMERA);
-        drawHosts(canvas, masterCamera);
 
         for (Pair<String, Skeleton> skeletonEntry : frame) {
 
             String cameraName = skeletonEntry.first;
             Skeleton skeleton = skeletonEntry.second;
 
-            // If a master camera is defined, transform to master camera coordinates and then draw
-            if (masterCamera != null) {
-
-                CoordinatesTransformer ct = DataHolder.INSTANCE.retrieve(DataHolderEntry.CAMERA_TRANSFORMER);
-                skeleton = ct.transform(cameraName, masterCamera, skeleton);
-            }
-
-            // Draws the skeleton
-            drawBonesAndJoints(skeleton, canvas, getCameraColorKit(cameraName));
+            drawSingleSkeleton(cameraName, skeleton, masterCamera, canvas);
         }
+
+        // Keep skeletons for next iteration and draw frozen skeletons from slow cameras
+        Map<String, RemoteKinect> kinectDict = DataHolder.INSTANCE.retrieve(DataHolderEntry.CONNECTED_HOSTS);
+        for (Map.Entry<String, RemoteKinect> entry : kinectDict.entrySet()) {
+
+            String cameraName = entry.getKey();
+            List<Skeleton> trackedSkeletons = frame.getSkeletons(cameraName);
+
+            if (trackedSkeletons == null)
+                continue;
+
+            if (trackedSkeletons.size() == 0) {
+
+                Pair<Long, List<Skeleton>> lastView = _lastCameraViews.get(cameraName);
+
+                if (lastView != null) {
+
+                    long timeSinceLastRender = lastView.first - System.currentTimeMillis();
+
+                    if (timeSinceLastRender < 1000) {
+
+                        for (Skeleton skeleton: lastView.second) {
+                            drawSingleSkeleton(cameraName, skeleton, masterCamera, canvas);
+                        }
+                    }
+                }
+            }
+            else {
+                long now = System.currentTimeMillis();
+                _lastCameraViews.put(cameraName, new Pair<>(now, trackedSkeletons));
+            }
+        }
+
+        drawHosts(canvas, masterCamera);
 
         LinearLayout ll = (LinearLayout) _activity.findViewById(R.id.rect);
         ll.setBackground(new BitmapDrawable(_bg));

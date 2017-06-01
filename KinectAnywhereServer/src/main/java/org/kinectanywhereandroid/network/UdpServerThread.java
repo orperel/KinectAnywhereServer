@@ -167,7 +167,7 @@ public class UdpServerThread extends Thread{
 
                 if (i < packet.getLength()) {
                     List<Skeleton> skeletonList = parseSkeleton(packet, ++i);
-                    remoteKinect.skeletonQueue.add(skeletonList);
+                    remoteKinect.enqueue(skeletonList);
 
                     if (mServerMock != null) {
                         mServerMock.recordSkels(hostname, skeletonList); // TODO: delete this

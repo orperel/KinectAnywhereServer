@@ -147,7 +147,7 @@ public class UDPServerThreadMock extends Thread {
 
                     RemoteKinect remoteKinect = _kinectDict.get(hostname);
                     remoteKinect.lastBeacon = System.currentTimeMillis();
-                    remoteKinect.skeletonQueue.add(nextPacket.skels);
+                    remoteKinect.enqueue(nextPacket.skels);
                 }
             }
 

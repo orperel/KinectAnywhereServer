@@ -33,6 +33,7 @@ public class SkelCalibrator implements IKinectFrameEventListener, CoordinatesTra
 
         _algo = new CalibrationAlgo();
         _transformations = new HashMap<>();
+        _temporalApproximations = new HashMap<>();
         DataHolder.INSTANCE.save(DataHolderEntry.CAMERA_TRANSFORMER, this);
     }
 

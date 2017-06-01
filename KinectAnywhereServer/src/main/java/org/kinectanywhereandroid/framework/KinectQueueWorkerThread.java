@@ -27,15 +27,18 @@ public class KinectQueueWorkerThread extends TimerTask implements IKinectQueueCo
     /** Threshold of gap in milliseconds allowed between kinect camera snapshots to be considered the same frame.
      *  Assumption: The kinect cameras are synchronized in time as closely as possible
      */
-    private final static int FRAME_THRESHOLD = 30;
+    private final static int FRAME_THRESHOLD = 45;
 
+    private Timer _timer;
     private List<WeakReference<IKinectFrameEventListener>> _listeners;
     private boolean _running;
+    private long _lastTimerTick;
 
     public KinectQueueWorkerThread() {
         super();
         _listeners = new LinkedList<>();
         _running = false;
+        _lastTimerTick = System.currentTimeMillis();
     }
 
     @Override
@@ -51,73 +54,84 @@ public class KinectQueueWorkerThread extends TimerTask implements IKinectQueueCo
      */
     @Nullable
     public SingleFrameData sampleKinectQueues(Map<String, RemoteKinect> kinectDict) {
-        long startTimestamp = System.currentTimeMillis();
 
-        while (System.currentTimeMillis() - startTimestamp < FRAME_THRESHOLD) {
-            double maxDiff = 0;
-            String mostEarlyHost = null;
-            double minTimestamp = Double.MAX_VALUE;
 
-            // Iterate all skeletons for all connected kinect cameras and compare maximum time differences
-            // for latest recorded data
-            for(Map.Entry<String, RemoteKinect> remoteKinectEntry: kinectDict.entrySet()) {
+        double maxDiff = 0;
+        String mostEarlyHost = null;
+        double minTimestamp = Double.MAX_VALUE;
+        boolean allKinectsReady = true;
+        SingleFrameDataBuilder frameBuilder = new SingleFrameDataBuilder();
 
-                String kinectHostname = remoteKinectEntry.getKey();
-                RemoteKinect kinect = remoteKinectEntry.getValue();
+        Log.i(TAG, "Begin frame");
 
-                if (kinect.isTrackingSkeletons()) {
+        // Iterate all skeletons for all connected kinect cameras and compare maximum time differences
+        // for latest recorded data
+        for(Map.Entry<String, RemoteKinect> remoteKinectEntry: kinectDict.entrySet()) {
 
-                    // All skeletons have the same timestamp for the same camera
-                    double kinect1Timestamp = kinect.nextTimeStamp();
+            String kinectHostname = remoteKinectEntry.getKey();
+            RemoteKinect kinect = remoteKinectEntry.getValue();
 
-                    if (kinect1Timestamp < minTimestamp) {
-                        minTimestamp = kinect1Timestamp;
-                        mostEarlyHost = kinectHostname;
-                    }
+            if (kinect.isTrackingSkeletons()) {
 
-                    // Compare against all other cameras to check timestamp distance
-                    for(Map.Entry<String, RemoteKinect> comparedKinectEntry: kinectDict.entrySet()) {
+                // All skeletons have the same timestamp for the same camera
+                double kinect1Timestamp = kinect.nextTimeStamp();
 
-                        String comparedHostname = comparedKinectEntry.getKey();
-                        RemoteKinect comparedKinect = comparedKinectEntry.getValue();
+                if (kinect1Timestamp < minTimestamp) {
+                    minTimestamp = kinect1Timestamp;
+                    mostEarlyHost = kinectHostname;
+                }
 
-                        if (!kinectHostname.equals(comparedHostname) && comparedKinect.isTrackingSkeletons()) {
-                            double kinect2Timestamp = comparedKinect.nextTimeStamp();
-                            double diff = abs(kinect1Timestamp - kinect2Timestamp);
-                            if (diff > maxDiff) {
-                                maxDiff = diff; // Store maximum difference of time between 2 kinects
-                            }
+                // Compare against all other cameras to check timestamp distance
+                for(Map.Entry<String, RemoteKinect> comparedKinectEntry: kinectDict.entrySet()) {
+
+                    String comparedHostname = comparedKinectEntry.getKey();
+                    RemoteKinect comparedKinect = comparedKinectEntry.getValue();
+
+                    if (!kinectHostname.equals(comparedHostname) && comparedKinect.isTrackingSkeletons()) {
+                        double kinect2Timestamp = comparedKinect.nextTimeStamp();
+                        double diff = abs(kinect1Timestamp - kinect2Timestamp);
+                        if (diff > maxDiff) {
+                            maxDiff = diff; // Store maximum difference of time between 2 kinects
                         }
                     }
                 }
-            }
 
-            if (mostEarlyHost != null) {
-                // Second pass - build the actual frame
-                // The frame is valid only if the kinect time signatures of latest data are not too far apart,
-                // otherwise we discard this frame and throw away the oldest piece of info for one of the kinects
-                if (maxDiff > FRAME_THRESHOLD) {
-                    kinectDict.get(mostEarlyHost).skeletonQueue.poll(); // Discard
-                }
-            }
-        }
-
-        SingleFrameDataBuilder frameBuilder = new SingleFrameDataBuilder();
-
-        for(Map.Entry<String, RemoteKinect> remotekinectEntry: kinectDict.entrySet()) {
-
-            String kinectHostname = remotekinectEntry.getKey();
-            RemoteKinect kinect = remotekinectEntry.getValue();
-
-            if (!kinect.isTrackingSkeletons()) {
-                frameBuilder.addQuietHost(kinectHostname); // List a camera without skeletons
+                Log.i(TAG, kinectHostname + " tracked " + kinect.peek().size() + " skels");
+                frameBuilder.addSkeletons(kinectHostname, kinect.poll()); // List a camera with skeletons
             }
             else {
-                frameBuilder.addSkeletons(kinectHostname, kinect.skeletonQueue.poll()); // List a camera with skeletons
+                Log.i(TAG, kinectHostname + " tracked no skels");
+                frameBuilder.addQuietHost(kinectHostname); // List a camera without skeletons
+
+                allKinectsReady = false;
             }
         }
 
+        if (mostEarlyHost != null) {
+            // Second pass - build the actual frame
+            // The frame is valid only if the kinect time signatures of latest data are not too far apart,
+            // otherwise we discard this frame and throw away the oldest piece of info for one of the kinects
+            if (maxDiff > FRAME_THRESHOLD) {
+                //kinectDict.get(mostEarlyHost).poll(); // Discard
+
+                Log.i(TAG, "WorkerThread bailed out due to " + mostEarlyHost + " being late at " + maxDiff);
+                return null;
+            }
+        }
+        else {
+            Log.i(TAG, "No skeletons in any queue for this frame");
+            return null;
+        }
+
+        long timeSinceLastUpdate = System.currentTimeMillis() - _lastTimerTick;
+        if (!allKinectsReady && timeSinceLastUpdate < 0) {
+            return null;
+        }
+
+        Log.i(TAG, "Prompting frame");
+
         frameBuilder.addTimestamp(System.currentTimeMillis());
+        _lastTimerTick = System.currentTimeMillis();
         return frameBuilder.build();
     }
 
@@ -151,15 +165,16 @@ public class KinectQueueWorkerThread extends TimerTask implements IKinectQueueCo
         _running = true;
 
         // 30 fps
-        int delay = 3;
-        int period = 30;
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(this, delay, period);
+        long delay = 0;
+        long period = 32;
+        _timer = new Timer();
+        _timer.scheduleAtFixedRate(this, delay, period);
     }
 
     @Override
     public void deactivate() {
 
         _running = false;
+        _timer.cancel();
     }
 }
