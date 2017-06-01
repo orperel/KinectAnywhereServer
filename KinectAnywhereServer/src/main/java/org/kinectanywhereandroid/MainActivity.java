@@ -134,8 +134,6 @@ public class MainActivity extends AppCompatActivity {
         _activateClientMenu.add(MenuOptions.ACTIVATE_CLIENT_GROUP.id, 0, Menu.FIRST, "All cameras");
         _shutdownMenu.add(MenuOptions.SHUTDOWN_MENU_GROUP.id, 0, Menu.FIRST, "All cameras");
 
-        menu.getItem(0).setEnabled(false); // Disable title clicks
-
         return true;
     }
 
