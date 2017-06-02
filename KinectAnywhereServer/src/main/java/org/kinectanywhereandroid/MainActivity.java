@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         REPLAY
     }
 
-    private AppMode mode = AppMode.NORMAL;
+    private AppMode mode = AppMode.REPLAY;
 
     TextView infoIp;
     TextView textViewState, textViewPrompt;
