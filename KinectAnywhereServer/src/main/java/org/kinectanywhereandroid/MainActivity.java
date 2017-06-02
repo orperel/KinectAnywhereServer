@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         REPLAY
     }
 
-    private AppMode mode = AppMode.REPLAY;
+    private AppMode mode = AppMode.NORMAL;
 
     TextView infoIp;
     TextView textViewState, textViewPrompt;
@@ -96,16 +96,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        infoIp = (TextView) findViewById(R.id.infoip);
-        textViewState = (TextView)findViewById(R.id.state);
-        textViewPrompt = (TextView)findViewById(R.id.prompt);
+        // TODO: delete uncomment
+//        infoIp = (TextView) findViewById(R.id.infoip);
+//        textViewState = (TextView)findViewById(R.id.state);
+//        textViewPrompt = (TextView)findViewById(R.id.prompt);
         _menuClients = new ArrayList<>();
 
-        try {
-            infoIp.setText(Utils.getIpAddress() + ":" + String.valueOf(UDP_SERVER_PORT));
-        } catch (SocketException e) {
-            Log.e(TAG, e.getLocalizedMessage());
-        }
+//        try {
+//            infoIp.setText(Utils.getIpAddress() + ":" + String.valueOf(UDP_SERVER_PORT));
+//        } catch (SocketException e) {
+//            Log.e(TAG, e.getLocalizedMessage());
+//        }
     }
 
     @Override
@@ -339,7 +340,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void updateState(final String state){
-        textViewState.setText(state);
+//        textViewState.setText(state);
     }
 
     public void updatePrompt(final String prompt){

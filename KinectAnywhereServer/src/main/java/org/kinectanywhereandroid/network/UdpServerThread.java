@@ -164,8 +164,15 @@ public class UdpServerThread extends Thread{
                     _kinectDict.put(hostname, new RemoteKinect());
                 }
 
+//                boolean isKinectON = true;
+//                if (packet.getData()[i] != 0) {
+//                    isKinectON = (packet.getData()[i] == 1);
+//                    i++;
+//                }
+
                 RemoteKinect remoteKinect = _kinectDict.get(hostname);
                 remoteKinect.lastBeacon = System.currentTimeMillis();
+//                remoteKinect.isON = isKinectON;
 
                 if (i < packet.getLength()) {
                     List<Skeleton> skeletonList = parseSkeleton(packet, ++i);

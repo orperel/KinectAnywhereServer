@@ -225,7 +225,7 @@ public class SkelPainter implements IKinectFrameEventListener {
                 paint.setTypeface(Typeface.DEFAULT);
             }
 
-            String cameraInfo = cameraName + " [~" + kinect.fps() + " FPS]";
+            String cameraInfo = cameraName + " [" + kinect.fps() + " FPS]";
             cameraColorKit.deactivateShadow();
             canvas.drawText(cameraInfo, 30, 30 + i * 25, cameraColorKit.jointsPaint);
 
