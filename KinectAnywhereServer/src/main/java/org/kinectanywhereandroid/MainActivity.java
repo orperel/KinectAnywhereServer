@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         REPLAY
     }
 
-    private AppMode mode = AppMode.REPLAY;
+    private AppMode mode = AppMode.NORMAL;
 
     TextView infoIp;
     TextView textViewState, textViewPrompt;
@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
 
                 _masterCameraMenu.add(MenuOptions.MASTER_CAMERA_GROUP.id, optionId, Menu.NONE, hostname);
                 _activateClientMenu.add(MenuOptions.ACTIVATE_CLIENT_GROUP.id, optionId, Menu.NONE, hostname).
-                        setCheckable(true).setChecked(true);
+                        setCheckable(true).setChecked(connectedHosts.get(hostname).isON);
                 _shutdownMenu.add(MenuOptions.SHUTDOWN_MENU_GROUP.id, optionId, Menu.NONE, hostname);
             }
         }

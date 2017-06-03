@@ -8,26 +8,26 @@ import java.util.Enumeration;
 public class Utils {
     static public String getIpAddress() throws SocketException {
         // TODO: just for genymotion...
-//        String ip = "";
-//
-//        Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface.getNetworkInterfaces();
-//        while (enumNetworkInterfaces.hasMoreElements()) {
-//            NetworkInterface networkInterface = enumNetworkInterfaces.nextElement();
-//            Enumeration<InetAddress> enumInetAddress = networkInterface.getInetAddresses();
-//            while (enumInetAddress.hasMoreElements()) {
-//                InetAddress inetAddress = enumInetAddress.nextElement();
-//
-//                if (inetAddress.isSiteLocalAddress()) {
-//                    return inetAddress.getHostAddress();
-//                }
-//
-//            }
-//
-//        }
-//
-//        return ip;
+        String ip = "";
 
-        return "192.168.1.106";
+        Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface.getNetworkInterfaces();
+        while (enumNetworkInterfaces.hasMoreElements()) {
+            NetworkInterface networkInterface = enumNetworkInterfaces.nextElement();
+            Enumeration<InetAddress> enumInetAddress = networkInterface.getInetAddresses();
+            while (enumInetAddress.hasMoreElements()) {
+                InetAddress inetAddress = enumInetAddress.nextElement();
+
+                if (inetAddress.isSiteLocalAddress()) {
+                    return inetAddress.getHostAddress();
+                }
+
+            }
+
+        }
+
+        return ip;
+
+//        return "192.168.1.106";
     }
 
     static public String getBroadcastingAddress() throws SocketException {

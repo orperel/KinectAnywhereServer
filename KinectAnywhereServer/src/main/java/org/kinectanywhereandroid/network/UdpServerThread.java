@@ -160,22 +160,24 @@ public class UdpServerThread extends Thread{
 
                 String hostname = new String(Arrays.copyOfRange(hostnameBytes, 0, i), StandardCharsets.US_ASCII);
 
+                i++;
+
                 if (_kinectDict.get(hostname) == null) {
                     _kinectDict.put(hostname, new RemoteKinect());
                 }
 
-//                boolean isKinectON = true;
-//                if (packet.getData()[i] != 0) {
-//                    isKinectON = (packet.getData()[i] == 1);
-//                    i++;
-//                }
+                boolean isKinectON = true;
+                if (packet.getData()[i] == 0) {
+                    isKinectON = false;
+                }
+                i++;
 
                 RemoteKinect remoteKinect = _kinectDict.get(hostname);
                 remoteKinect.lastBeacon = System.currentTimeMillis();
-//                remoteKinect.isON = isKinectON;
+                remoteKinect.isON = isKinectON;
 
                 if (i < packet.getLength()) {
-                    List<Skeleton> skeletonList = parseSkeleton(packet, ++i);
+                    List<Skeleton> skeletonList = parseSkeleton(packet, i);
                     remoteKinect.enqueue(skeletonList);
 
                     if (mServerMock != null) {
