@@ -95,6 +95,35 @@ public class SingleFrameData implements Iterable<Pair<String, Skeleton>>, Serial
     }
 
     /**
+     * @return Number of sensors participating in this frame
+     */
+    public int numOfCameras() {
+
+        return _skeletons.size();
+    }
+
+    /**
+     * @return Average time of when all cameras participating in this frame sampled their skeletons
+     * (assumptions: all Skeletons for one camera share the same time)
+     */
+    public long getAverageSensorsFrameTime() {
+
+        int avgCount = 0;
+        long avgTime = 0;
+
+        for (Map.Entry<String, List<Skeleton>> cameraEntry: _skeletons.entrySet()) {
+
+            if ((cameraEntry.getValue() != null) && (cameraEntry.getValue().size() > 0)) {
+
+                avgTime += cameraEntry.getValue().get(0).getTimestamp();
+                avgCount++;
+            }
+        }
+
+        return (avgTime / avgCount);
+    }
+
+    /**
      * @return The exact time of when this frame was assembled in milliseconds
      */
     public long getTimestamp() {

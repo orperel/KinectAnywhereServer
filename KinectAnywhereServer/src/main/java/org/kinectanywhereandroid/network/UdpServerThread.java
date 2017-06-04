@@ -77,14 +77,17 @@ public class UdpServerThread extends Thread{
 
         i += 8;
 
-        double timestamp = ByteBuffer.wrap(timestampsBytes).order(ByteOrder.LITTLE_ENDIAN).getDouble();
+        // C# TimeSpan measures milliseconds and fraction of milliseconds in double,
+        // Java uses long for currentTime.
+        double csharp_timestamp = ByteBuffer.wrap(timestampsBytes).order(ByteOrder.LITTLE_ENDIAN).getDouble();
+        long timestamp = (long)csharp_timestamp; // We work in resolution of milliseconds anyway
 
         List<Skeleton> skeletonList = new LinkedList<>();
 
         while (i < packet.getLength()) {
             Skeleton skeleton = new Skeleton();
 
-            skeleton.timestamp = timestamp;
+            skeleton.setTimestamp(timestamp);
 
             // Parse skeletons tracker id
             for (int k = 0; k < 4; k++) {   // Get current point from packet

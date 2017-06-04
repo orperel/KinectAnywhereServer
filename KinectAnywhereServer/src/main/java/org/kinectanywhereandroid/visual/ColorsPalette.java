@@ -96,13 +96,11 @@ public class ColorsPalette {
 
         float shadowRadius = 0.4f;
         painter.setShadowLayer(shadowRadius, 0.5f, 0.5f, Color.DKGRAY);
-        painter.setAntiAlias(true);
     }
 
     private void deactivateShadow(Paint painter) {
 
         painter.setShadowLayer(0, 0.0f, 0.0f, Color.DKGRAY);
-        painter.setAntiAlias(false);
     }
 
     public void activateShadow() {

@@ -12,7 +12,7 @@ public class Skeleton implements Serializable {
 	
     public Joint[] joints ;
     public int trackingId;
-    public double timestamp;
+    private double timestamp;
 
     public Skeleton() {
 
@@ -29,5 +29,15 @@ public class Skeleton implements Serializable {
 
         trackingId = srcSkel.trackingId;
         timestamp = srcSkel.timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+
+        this.timestamp = timestamp;
+    }
+
+    public long getTimestamp() {
+
+        return (long)timestamp;
     }
 }

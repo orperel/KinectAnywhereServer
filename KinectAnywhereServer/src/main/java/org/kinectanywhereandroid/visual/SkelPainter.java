@@ -23,6 +23,9 @@ import org.kinectanywhereandroid.util.DataHolder;
 import org.kinectanywhereandroid.util.DataHolderEntry;
 import org.kinectanywhereandroid.util.Pair;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -204,10 +207,18 @@ public class SkelPainter implements IKinectFrameEventListener {
         return _camerasColorKit.get(cameraName);
     }
 
+    private String getTimeString(long timeMilliseconds) {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+
+        Date resultDate = new Date(timeMilliseconds);
+        return sdf.format(resultDate);
+    }
+
     public void drawHosts(Canvas canvas, String masterCamera) {
+
         Paint paint = new Paint();
-        paint.setColor(Color.WHITE);
-        paint.setTextSize(16);
+        paint.setTextSize(20.0f);
 
         int i = 0;
         Map<String, RemoteKinect> kinectDict = DataHolder.INSTANCE.retrieve(DataHolderEntry.CONNECTED_HOSTS);
@@ -218,6 +229,8 @@ public class SkelPainter implements IKinectFrameEventListener {
             RemoteKinect kinect = entry.getValue();
             ColorsPalette cameraColorKit = getCameraColorKit(cameraName);
 
+            paint.setColor(cameraColorKit.jointsPaint.getColor());
+
             if (cameraName.equals(masterCamera)) { // Master camera name in bold
                 paint.setTypeface(Typeface.DEFAULT_BOLD);
             }
@@ -225,9 +238,10 @@ public class SkelPainter implements IKinectFrameEventListener {
                 paint.setTypeface(Typeface.DEFAULT);
             }
 
-            String cameraInfo = cameraName + " [" + kinect.fps() + " FPS]";
-            cameraColorKit.deactivateShadow();
-            canvas.drawText(cameraInfo, 30, 30 + i * 25, cameraColorKit.jointsPaint);
+            String fps = String.format("%02d", kinect.fps());
+            String cameraInfo = cameraName + " @ " + getTimeString(kinect.lastBeacon) + " [" + fps + " FPS]";
+
+            canvas.drawText(cameraInfo, 30, 30 + i * 25, paint);
 
             if (entry.getValue().isON) {
                 paint.setColor(Color.GREEN);
@@ -237,8 +251,6 @@ public class SkelPainter implements IKinectFrameEventListener {
 
             canvas.drawCircle(15, 23 + i * 25, 6, paint);
             i++;
-
-            cameraColorKit.activateShadow();
         }
     }
 

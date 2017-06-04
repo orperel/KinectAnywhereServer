@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         REPLAY
     }
 
-    private AppMode mode = AppMode.NORMAL;
+    private AppMode mode = AppMode.REPLAY;
 
     TextView infoIp;
     TextView textViewState, textViewPrompt;
@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     Menu _calibrationModeMenu;
     Menu _activateClientMenu;
     Menu _shutdownMenu;
+    MenuItem _showAvgSkelMenuItem;
 
     static final int UDP_SERVER_PORT = 11000;
     static final int UDP_BROADCATING_PORT = 5000;
@@ -122,8 +123,8 @@ public class MainActivity extends AppCompatActivity {
         _shutdownMenu = menu.addSubMenu("Shutdown Client");
 
         _masterCameraMenu.add(MenuOptions.MASTER_CAMERA_GROUP.id, 0, Menu.FIRST, "No master");
-        menu.add(MenuOptions.SHOW_ESTIMATED_SKEL.id, 0, Menu.NONE, "Show Estimated Skeleton").
-                setCheckable(true).setChecked(false);
+        _showAvgSkelMenuItem = menu.add(MenuOptions.SHOW_ESTIMATED_SKEL.id, 0, Menu.NONE, "Show Estimated Skeleton").
+                                        setCheckable(true).setChecked(false);
         _calibrationModeMenu.add(MenuOptions.CALIBRATION_MODE_GROUP.id, MenuOptions.CALIBRATION_MODE_PER_FRAME.id,
                                  Menu.NONE, "Per Frame");
         _calibrationModeMenu.add(MenuOptions.CALIBRATION_MODE_GROUP.id, MenuOptions.CALIBRATION_MODE_TEMPORAL_APPROX.id,
@@ -204,6 +205,12 @@ public class MainActivity extends AppCompatActivity {
                 if (id != 0)
                     master = _menuClients.get(id - 1);
 
+                // If no master is picked reset show estimated skeleton
+                if (master == null) {
+                    DataHolder.INSTANCE.save(DataHolderEntry.SHOW_AVERAGE_SKELETONS, false);
+                    _showAvgSkelMenuItem.setChecked(false);
+                }
+
                 DataHolder.INSTANCE.save(DataHolderEntry.MASTER_CAMERA, master);
                 return true;
             }
@@ -234,7 +241,8 @@ public class MainActivity extends AppCompatActivity {
             }
             case SHOW_ESTIMATED_SKEL: {
 
-                item.setChecked(!item.isChecked());
+                boolean isChecked = DataHolder.INSTANCE.retrieve(DataHolderEntry.SHOW_AVERAGE_SKELETONS);
+                item.setChecked(!isChecked);
                 DataHolder.INSTANCE.save(DataHolderEntry.SHOW_AVERAGE_SKELETONS, item.isChecked());
 
                 if (item.isChecked()) {

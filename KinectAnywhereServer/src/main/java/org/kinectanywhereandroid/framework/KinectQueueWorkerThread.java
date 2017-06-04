@@ -56,9 +56,9 @@ public class KinectQueueWorkerThread extends TimerTask implements IKinectQueueCo
     public SingleFrameData sampleKinectQueues(Map<String, RemoteKinect> kinectDict) {
 
 
-        double maxDiff = 0;
+        long maxDiff = 0;
         String mostEarlyHost = null;
-        double minTimestamp = Double.MAX_VALUE;
+        long minTimestamp = Long.MAX_VALUE;
         boolean allKinectsReady = true;
         SingleFrameDataBuilder frameBuilder = new SingleFrameDataBuilder();
 
@@ -74,7 +74,7 @@ public class KinectQueueWorkerThread extends TimerTask implements IKinectQueueCo
             if (kinect.isTrackingSkeletons()) {
 
                 // All skeletons have the same timestamp for the same camera
-                double kinect1Timestamp = kinect.nextTimeStamp();
+                long kinect1Timestamp = kinect.nextTimeStamp();
 
                 if (kinect1Timestamp < minTimestamp) {
                     minTimestamp = kinect1Timestamp;
@@ -88,8 +88,8 @@ public class KinectQueueWorkerThread extends TimerTask implements IKinectQueueCo
                     RemoteKinect comparedKinect = comparedKinectEntry.getValue();
 
                     if (!kinectHostname.equals(comparedHostname) && comparedKinect.isTrackingSkeletons()) {
-                        double kinect2Timestamp = comparedKinect.nextTimeStamp();
-                        double diff = abs(kinect1Timestamp - kinect2Timestamp);
+                        long kinect2Timestamp = comparedKinect.nextTimeStamp();
+                        long diff = abs(kinect1Timestamp - kinect2Timestamp);
                         if (diff > maxDiff) {
                             maxDiff = diff; // Store maximum difference of time between 2 kinects
                         }

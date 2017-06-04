@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class RemoteKinect {
 
-    public static final double INVALID_TIME = -1.0f;
+    public static final long INVALID_TIME = -1;
 
     /** All data currently received for this kinect client */
     private Queue<List<Skeleton>> skeletonQueue = new ConcurrentLinkedQueue<>();
@@ -48,12 +48,12 @@ public class RemoteKinect {
     /**
      * @return The timestamp of the next skeleton list in the head of the queue
      */
-    public double nextTimeStamp() {
+    public long nextTimeStamp() {
 
         if (!isTrackingSkeletons())
             return INVALID_TIME;
 
-        return skeletonQueue.peek().get(0).timestamp;
+        return skeletonQueue.peek().get(0).getTimestamp();
     }
 
     public int fps() {
