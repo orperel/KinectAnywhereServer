@@ -1,9 +1,9 @@
 package org.kinectanywhereandroid.framework;
 
 /**
- * Interface for Kinect raw data queues consumers
+ * Interface for Kinect raw data samples consumers
  */
-public interface IKinectQueueConsumer {
+public interface IKinectDataConsumer {
 
     /** Register modules that may want to respond to arriving kinect frames (e.g: paint, calibrate..) */
     public void register(IKinectFrameEventListener listener);

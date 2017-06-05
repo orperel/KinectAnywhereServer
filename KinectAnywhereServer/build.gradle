@@ -28,6 +28,7 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.0-beta4'
     testCompile 'junit:junit:4.12'
     compile files('src/main/Jama-1.0.3.jar')
+    compile 'net.jcip:jcip-annotations:1.0'
 }
 
 repositories {

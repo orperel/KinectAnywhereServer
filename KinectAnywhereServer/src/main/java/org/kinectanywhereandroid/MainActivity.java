@@ -12,23 +12,24 @@ import android.widget.Toast;
 
 import org.kinectanywhereandroid.algorithm.CalibrationAlgo;
 import org.kinectanywhereandroid.algorithm.SkelCalibrator;
-import org.kinectanywhereandroid.framework.IKinectQueueConsumer;
+import org.kinectanywhereandroid.framework.IKinectDataConsumer;
 import org.kinectanywhereandroid.framework.KinectQueueWorkerThread;
+import org.kinectanywhereandroid.framework.KinectSampleWorkerThread;
+import org.kinectanywhereandroid.framework.QueuedSamplesKinect;
 import org.kinectanywhereandroid.framework.RemoteKinect;
+import org.kinectanywhereandroid.framework.SingleSampleKinect;
 import org.kinectanywhereandroid.network.UdpBroadcastingThread;
 import org.kinectanywhereandroid.network.UdpServerThread;
-import org.kinectanywhereandroid.network.Utils;
 import org.kinectanywhereandroid.recorder.UDPServerThreadMock;
 import org.kinectanywhereandroid.util.DataHolder;
 import org.kinectanywhereandroid.util.DataHolderEntry;
 import org.kinectanywhereandroid.visual.SkelPainter;
 
-import java.net.SocketException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,7 +40,15 @@ public class MainActivity extends AppCompatActivity {
         REPLAY
     }
 
-    private AppMode mode = AppMode.REPLAY;
+    private enum RemoteKinectMode {
+
+        QUEUE,  // Process all samples from a queue
+        SAMPLE  // Always keep the latest sample only
+    }
+
+    // -- App settings --
+    private AppMode mode = AppMode.NORMAL;
+    private RemoteKinectMode dataProcessingMode = RemoteKinectMode.SAMPLE;
 
     TextView infoIp;
     TextView textViewState, textViewPrompt;
@@ -55,12 +64,13 @@ public class MainActivity extends AppCompatActivity {
     UdpServerThread udpServerThread;
     UdpBroadcastingThread udpBroadcastingThread;
     UDPServerThreadMock mockServer;
-    IKinectQueueConsumer kinectQueueConsumer;
+    IKinectDataConsumer kinectDataConsumer;
     SkelPainter painter;
     SkelCalibrator calibrator;
     UDPServerThreadMock recorder;
 
     ArrayList<String> _menuClients;
+    Constructor<? extends RemoteKinect> _remoteKinectCtor;
 
     private enum MenuOptions {
 
@@ -294,8 +304,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void createClientDataHandlerPipeline() {
+
+        try {
+            if (dataProcessingMode == RemoteKinectMode.QUEUE) {
+                _remoteKinectCtor = QueuedSamplesKinect.class.getConstructor();
+                kinectDataConsumer =  new KinectQueueWorkerThread();
+            }
+            else if (dataProcessingMode == RemoteKinectMode.SAMPLE) {
+                _remoteKinectCtor = SingleSampleKinect.class.getConstructor();
+                kinectDataConsumer =  new KinectSampleWorkerThread();
+            }
+            else {
+                throw new IllegalStateException("Incorrect enum value for RemoteKinectMode");
+            }
+        }
+        catch (NoSuchMethodException e) {
+            Log.e(TAG, "Error fetching RemoteKinect sub class constructor");
+        }
+        DataHolder.INSTANCE.save(DataHolderEntry.REMOTE_KINECT_CTOR, _remoteKinectCtor);
+    }
+
     @Override
     protected void onStart() {
+
+        createClientDataHandlerPipeline();
 
         if (mode != AppMode.REPLAY) {
 
@@ -310,16 +343,14 @@ public class MainActivity extends AppCompatActivity {
         udpBroadcastingThread = new UdpBroadcastingThread(UDP_BROADCATING_PORT);
         udpBroadcastingThread.start();
 
-        kinectQueueConsumer =  new KinectQueueWorkerThread();
-
         DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE, CalibrationAlgo.CalibrationMode.BEST_IN_CLASS);
         DataHolder.INSTANCE.save(DataHolderEntry.SHOW_AVERAGE_SKELETONS, false);
         calibrator = new SkelCalibrator();
-        kinectQueueConsumer.register(calibrator);
+        kinectDataConsumer.register(calibrator);
 
         painter = new SkelPainter(this);
-        kinectQueueConsumer.register(painter);
-        kinectQueueConsumer.activate();
+        kinectDataConsumer.register(painter);
+        kinectDataConsumer.activate();
 
         if (mockServer != null)
             mockServer.startReplay();
@@ -339,9 +370,9 @@ public class MainActivity extends AppCompatActivity {
             udpBroadcastingThread = null;
         }
 
-        if (kinectQueueConsumer != null) {
-            kinectQueueConsumer.deactivate();
-            kinectQueueConsumer = null;
+        if (kinectDataConsumer != null) {
+            kinectDataConsumer.deactivate();
+            kinectDataConsumer = null;
         }
 
         super.onStop();

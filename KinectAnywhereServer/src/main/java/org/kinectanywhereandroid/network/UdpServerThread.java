@@ -10,6 +10,7 @@ import org.kinectanywhereandroid.recorder.UDPServerThreadMock;
 import org.kinectanywhereandroid.util.DataHolder;
 import org.kinectanywhereandroid.util.DataHolderEntry;
 
+import java.lang.reflect.Constructor;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -21,8 +22,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 // Good example: http://android-er.blogspot.co.il/2016/06/android-datagramudp-server-example.html
 
@@ -166,7 +165,9 @@ public class UdpServerThread extends Thread{
                 i++;
 
                 if (_kinectDict.get(hostname) == null) {
-                    _kinectDict.put(hostname, new RemoteKinect());
+
+                    Constructor<? extends RemoteKinect> rkCtor = DataHolder.INSTANCE.retrieve(DataHolderEntry.REMOTE_KINECT_CTOR);
+                    _kinectDict.put(hostname, rkCtor.newInstance());
                 }
 
                 boolean isKinectON = true;

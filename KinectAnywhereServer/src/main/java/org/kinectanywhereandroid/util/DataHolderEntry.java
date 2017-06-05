@@ -5,6 +5,7 @@ import org.kinectanywhereandroid.algorithm.CoordinatesTransformer;
 import org.kinectanywhereandroid.framework.RemoteKinect;
 import org.kinectanywhereandroid.model.Skeleton;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,13 @@ public class DataHolderEntry<T> {
      * Calibration algorithm used by the skeleton calibrator
      */
     public final static DataHolderEntry<CalibrationAlgo.CalibrationMode> CALIBRATION_MODE = new DataHolderEntry<>();
+
+    /**
+     * Constructor for RemoteKinect concrete impls.
+     * Determines how RemoteKinect incoming should be handled
+     * (queued to handle all incoming samples or always use the last one to arrive).
+     */
+    public final static DataHolderEntry<Constructor<? extends RemoteKinect>> REMOTE_KINECT_CTOR = new DataHolderEntry<>();
 
     /**
      * List of skeletons viewed by master camera, including predictions from other cameras for missing

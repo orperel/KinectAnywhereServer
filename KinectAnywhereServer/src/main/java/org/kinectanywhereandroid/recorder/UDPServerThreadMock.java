@@ -15,6 +15,7 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -143,7 +144,8 @@ public class UDPServerThreadMock extends Thread {
 
                     String hostname = nextPacket.hostname;
                     if (_kinectDict.get(hostname) == null) {
-                        _kinectDict.put(hostname, new RemoteKinect());
+                        Constructor<? extends RemoteKinect> rkCtor = DataHolder.INSTANCE.retrieve(DataHolderEntry.REMOTE_KINECT_CTOR);
+                        _kinectDict.put(hostname, rkCtor.newInstance());
                     }
 
                     RemoteKinect remoteKinect = _kinectDict.get(hostname);

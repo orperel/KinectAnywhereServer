@@ -17,10 +17,10 @@ import static java.lang.Math.abs;
 import static org.kinectanywhereandroid.framework.SingleFrameData.SingleFrameDataBuilder;
 
 /**
- * Samples kinect queues of frames and notifies listeners about new incoming data arriving
+ * Processes kinect queues of frames and notifies listeners about new incoming data arriving
  * (e.g: calibrate, paint and so on)
  */
-public class KinectQueueWorkerThread extends TimerTask implements IKinectQueueConsumer {
+public class KinectQueueWorkerThread extends TimerTask implements IKinectDataConsumer {
 
     private final static String TAG = "QUEUE_WORKER_THREAD";
 
@@ -69,7 +69,7 @@ public class KinectQueueWorkerThread extends TimerTask implements IKinectQueueCo
         for(Map.Entry<String, RemoteKinect> remoteKinectEntry: kinectDict.entrySet()) {
 
             String kinectHostname = remoteKinectEntry.getKey();
-            RemoteKinect kinect = remoteKinectEntry.getValue();
+            QueuedSamplesKinect kinect = (QueuedSamplesKinect)remoteKinectEntry.getValue();
 
             if (kinect.isTrackingSkeletons()) {
 
@@ -85,7 +85,7 @@ public class KinectQueueWorkerThread extends TimerTask implements IKinectQueueCo
                 for(Map.Entry<String, RemoteKinect> comparedKinectEntry: kinectDict.entrySet()) {
 
                     String comparedHostname = comparedKinectEntry.getKey();
-                    RemoteKinect comparedKinect = comparedKinectEntry.getValue();
+                    QueuedSamplesKinect comparedKinect = (QueuedSamplesKinect)comparedKinectEntry.getValue();
 
                     if (!kinectHostname.equals(comparedHostname) && comparedKinect.isTrackingSkeletons()) {
                         long kinect2Timestamp = comparedKinect.nextTimeStamp();

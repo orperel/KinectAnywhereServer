@@ -1,60 +1,40 @@
 package org.kinectanywhereandroid.framework;
 
 import org.kinectanywhereandroid.model.Skeleton;
+import org.kinectanywhereandroid.util.DataHolder;
+import org.kinectanywhereandroid.util.DataHolderEntry;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class RemoteKinect {
+public abstract class RemoteKinect {
 
     public static final long INVALID_TIME = -1;
 
-    /** All data currently received for this kinect client */
-    private Queue<List<Skeleton>> skeletonQueue = new ConcurrentLinkedQueue<>();
     public long lastBeacon = System.currentTimeMillis();
     public boolean isON = true;
 
-    private int framesSinceLastPoll;
-    private long lastPollTime;
-
-    public void enqueue(List<Skeleton> skels) {
-
-        skeletonQueue.add(skels);
-        framesSinceLastPoll++;
-    }
-
-    public List<Skeleton> peek() {
-
-        return skeletonQueue.peek();
-    }
-
-    public List<Skeleton> poll() {
-
-        return skeletonQueue.poll();
-    }
+    protected int framesSinceLastPoll;
+    protected long lastPollTime;
 
     /**
-     * @return True if the next entry in the kinect queue contains any skeletons
+     * Cache another set of samples from the sensor
+     * @param skels
      */
-    public boolean isTrackingSkeletons() {
-
-        return skeletonQueue != null &&
-                !skeletonQueue.isEmpty() &&
-                !skeletonQueue.peek().isEmpty();
-    }
+    public abstract void enqueue(List<Skeleton> skels);
 
     /**
-     * @return The timestamp of the next skeleton list in the head of the queue
+     * @return Next entry from the sensor is valid and has tracked any skeletons
      */
-    public long nextTimeStamp() {
+    public abstract boolean isTrackingSkeletons();
 
-        if (!isTrackingSkeletons())
-            return INVALID_TIME;
-
-        return skeletonQueue.peek().get(0).getTimestamp();
-    }
+    /**
+     * @return The timestamp of the next skeleton list sample
+     */
+    public abstract long nextTimeStamp();
 
     public int fps() {
 
