@@ -140,6 +140,7 @@ public class UdpServerThread extends Thread{
         try {
             updateState("Starting UDP Server");
             socket = new DatagramSocket(serverPort);
+            socket.setReuseAddress(true);
 
             updateState("UDP Server is running");
             Log.e(TAG, "UDP Server is running");
@@ -176,7 +177,7 @@ public class UdpServerThread extends Thread{
                 }
                 i++;
 
-                RemoteKinect remoteKinect = _kinectDict.get(hostname);
+                 RemoteKinect remoteKinect = _kinectDict.get(hostname);
                 remoteKinect.lastBeacon = System.currentTimeMillis();
                 remoteKinect.isON = isKinectON;
 
