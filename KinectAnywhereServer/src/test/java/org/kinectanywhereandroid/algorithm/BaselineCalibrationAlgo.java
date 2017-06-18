@@ -298,13 +298,10 @@ public class BaselineCalibrationAlgo {
             }
             else if ((s <= EPSILON) && (c <= -1 + EPSILON) && (-1 - EPSILON <= c)) // s = 0, c = -1
             {
-                // TODO: v must be a non zero column of R + I
                 Matrix v = new Matrix(new double[][] { { R.get(0, 0) + 1}, { R.get(1, 0) }, { R.get(2, 0) } });
 
                 // u = PI * (v / ||v||)
                 Matrix u = v.times(1 / v.norm2()).times(Math.PI);
-
-                // TODO: Fix that
                 if ((u.norm2() == Math.PI) && (((u[0, 0] == 0) && (u[1, 0] == 0) && (u[2, 0] < 0)) ||
                 ((u[0, 0] == 0) && (u[1, 0] < 0)) ||
                 (u[0, 0] < 0)))

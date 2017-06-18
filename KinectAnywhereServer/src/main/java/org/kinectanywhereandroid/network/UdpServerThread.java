@@ -30,7 +30,7 @@ public class UdpServerThread extends Thread{
     int serverPort;
     MainActivity mActivity;
     DatagramSocket socket;
-    UDPServerThreadMock mServerMock; // TODO: No recordings
+    UDPServerThreadMock mServerMock;
     private Map<String, RemoteKinect> _kinectDict; // Mapping of connected clients
 
     boolean running;
@@ -186,7 +186,7 @@ public class UdpServerThread extends Thread{
                     remoteKinect.enqueue(skeletonList);
 
                     if (mServerMock != null) {
-                        mServerMock.recordSkels(hostname, skeletonList); // TODO: delete this
+                        mServerMock.recordSkels(hostname, skeletonList);
                     }
                 }
             }

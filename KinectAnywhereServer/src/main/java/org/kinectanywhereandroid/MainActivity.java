@@ -107,17 +107,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        // TODO: delete uncomment
-//        infoIp = (TextView) findViewById(R.id.infoip);
-//        textViewState = (TextView)findViewById(R.id.state);
-//        textViewPrompt = (TextView)findViewById(R.id.prompt);
         _menuClients = new ArrayList<>();
-
-//        try {
-//            infoIp.setText(Utils.getIpAddress() + ":" + String.valueOf(UDP_SERVER_PORT));
-//        } catch (SocketException e) {
-//            Log.e(TAG, e.getLocalizedMessage());
-//        }
     }
 
     @Override
@@ -141,10 +131,9 @@ public class MainActivity extends AppCompatActivity {
                                  Menu.NONE, "Temporal Approximation");
         _calibrationModeMenu.add(MenuOptions.CALIBRATION_MODE_GROUP.id, MenuOptions.CALIBRATION_MODE_BEST_IN_CLASS.id,
                                  Menu.NONE, "Best In Class");
-        _calibrationModeMenu.add(MenuOptions.CALIBRATION_MODE_GROUP.id, MenuOptions.CALIBRATION_MODE_KALMAN.id,
-                                 Menu.NONE, "Kalman Approximation");
-        _activateClientMenu.add(MenuOptions.ACTIVATE_CLIENT_GROUP.id, 0, Menu.FIRST, "All cameras");
-        _shutdownMenu.add(MenuOptions.SHUTDOWN_MENU_GROUP.id, 0, Menu.FIRST, "All cameras");
+        // Optional: In the future - Kalman filter can be added here
+//        _calibrationModeMenu.add(MenuOptions.CALIBRATION_MODE_GROUP.id, MenuOptions.CALIBRATION_MODE_KALMAN.id,
+//                                 Menu.NONE, "Kalman Approximation");
 
         return true;
     }
@@ -155,19 +144,24 @@ public class MainActivity extends AppCompatActivity {
         if (connectedHosts == null)
             return;
 
+        _masterCameraMenu.clear();
+        _activateClientMenu.clear();
+        _shutdownMenu.clear();
+
         Set<String> connectedHostnames = connectedHosts.keySet();
         for (String hostname: connectedHostnames) {
 
             if (!_menuClients.contains(hostname)) {
 
                 _menuClients.add(hostname);
-                int optionId = _menuClients.indexOf(hostname) + 1;
-
-                _masterCameraMenu.add(MenuOptions.MASTER_CAMERA_GROUP.id, optionId, Menu.NONE, hostname);
-                _activateClientMenu.add(MenuOptions.ACTIVATE_CLIENT_GROUP.id, optionId, Menu.NONE, hostname).
-                        setCheckable(true).setChecked(connectedHosts.get(hostname).isON);
-                _shutdownMenu.add(MenuOptions.SHUTDOWN_MENU_GROUP.id, optionId, Menu.NONE, hostname);
             }
+
+            int optionId = _menuClients.indexOf(hostname) + 1;
+
+            _masterCameraMenu.add(MenuOptions.MASTER_CAMERA_GROUP.id, optionId, Menu.NONE, hostname);
+            _activateClientMenu.add(MenuOptions.ACTIVATE_CLIENT_GROUP.id, optionId, Menu.NONE, hostname).
+                    setCheckable(true).setChecked(connectedHosts.get(hostname).isON);
+            _shutdownMenu.add(MenuOptions.SHUTDOWN_MENU_GROUP.id, optionId, Menu.NONE, hostname);
         }
     }
 
@@ -332,7 +326,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (mode != AppMode.REPLAY) {
 
-            boolean isRecord = (mode == AppMode.RECORD); // TODO: Delete this
+            boolean isRecord = (mode == AppMode.RECORD);
             udpServerThread = new UdpServerThread(UDP_SERVER_PORT, this, isRecord);
             udpServerThread.start();
         }
@@ -343,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
         udpBroadcastingThread = new UdpBroadcastingThread(UDP_BROADCATING_PORT);
         udpBroadcastingThread.start();
 
-        DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE, CalibrationAlgo.CalibrationMode.BEST_IN_CLASS);
+        DataHolder.INSTANCE.save(DataHolderEntry.CALIBRATION_MODE, CalibrationAlgo.CalibrationMode.PER_FRAME);
         DataHolder.INSTANCE.save(DataHolderEntry.SHOW_AVERAGE_SKELETONS, false);
         calibrator = new SkelCalibrator();
         kinectDataConsumer.register(calibrator);
@@ -379,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void updateState(final String state){
-//        textViewState.setText(state);
+
     }
 
     public void updatePrompt(final String prompt){

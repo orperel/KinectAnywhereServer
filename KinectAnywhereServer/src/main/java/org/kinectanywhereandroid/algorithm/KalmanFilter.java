@@ -10,13 +10,10 @@ import java.util.Random;
 import Jama.Matrix;
 
 
-// TODO: Verify timeK is bigger than time k+1
-// TODO: Change time to long from double
-// TODO: Handle first frame with null checks
-
-
-// TODO: If joint is untracked - keep predicting for 3-5 frames
-
+/** Incomplete implementation - not in use
+ *  This is a possible future implementation for a calibration filter
+ *  to be applied on top of the other calibration algorithms.
+ */
 public class KalmanFilter {
 
     /** Avoid prediction when delta-time is too big, this helps avoid noisy predictions
@@ -233,3 +230,8 @@ public class KalmanFilter {
         prevMeasurement = frameK;
     }
 }
+
+// Future tasks:
+// TODO: Verify timeK is bigger than time k+1
+// TODO: Handle first frame with null checks
+// TODO: If joint is untracked - keep predicting for 3-5 frames

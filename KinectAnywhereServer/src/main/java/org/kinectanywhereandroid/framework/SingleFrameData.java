@@ -206,7 +206,7 @@ public class SingleFrameData implements Iterable<Pair<String, Skeleton>>, Serial
         SingleFrameData build() {
 
             if ((frame._timestamp == UNINITIALIZED) || (frame._skeletons.isEmpty()))
-                return null; // TODO: change the server to safe-thread to fix this issue
+                return null;
 
             frame._prevFrameTimestamp = prevTimestamp;
             prevTimestamp = frame._timestamp; // List latest frame as prev from now on

@@ -7,7 +7,7 @@ import java.util.Enumeration;
 
 public class Utils {
     static public String getIpAddress() throws SocketException {
-        // TODO: just for genymotion...
+
         String ip = "";
 
         Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface.getNetworkInterfaces();
@@ -25,9 +25,10 @@ public class Utils {
 
         }
 
-        return ip;
-
+//        For debug with Genymotion emulator put your IP here:
 //        return "192.168.1.106";
+
+        return ip;
     }
 
     static public String getBroadcastingAddress() throws SocketException {

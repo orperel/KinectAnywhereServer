@@ -314,7 +314,7 @@ public class CalibrationAlgo {
             }
             else if ((s <= EPSILON) && (c <= -1 + EPSILON) && (-1 - EPSILON <= c)) // s = 0, c = -1
             {
-                // TODO: v must be a non zero column of R + I
+                // v must be a non zero column of R + I
                 Matrix v = new Matrix(new double[][] { { R.get(0, 0) + 1}, { R.get(1, 0) }, { R.get(2, 0) } });
 
                 // u = PI * (v / ||v||)
